@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { resolveSpells, nextStateAfterResolve } from '../js/resolution.js';
-import { SPELLS, BEATS, WIN_SCORE, CHAOS } from '../js/constants.js';
+import { SPELLS, BEATS, CHAOS } from '../js/constants.js';
 
 describe('resolveSpells', () => {
   describe('timeout (null defendSpell)', () => {
@@ -123,33 +123,33 @@ describe('resolveSpells', () => {
 });
 
 describe('nextStateAfterResolve', () => {
-  it('HIT at score 0 → NEXT_ROUND with scoreChange 1', () => {
-    const result = nextStateAfterResolve('HIT', 0, WIN_SCORE);
-    expect(result).toEqual({ scoreChange: 1, next: 'NEXT_ROUND' });
+  it('HIT at health=3 → NEXT_ROUND with healthChange -1', () => {
+    const result = nextStateAfterResolve('HIT', 3);
+    expect(result).toEqual({ healthChange: -1, next: 'NEXT_ROUND' });
   });
 
-  it('HIT at score WIN_SCORE-1 → GAME_OVER', () => {
-    const result = nextStateAfterResolve('HIT', WIN_SCORE - 1, WIN_SCORE);
-    expect(result).toEqual({ scoreChange: 1, next: 'GAME_OVER' });
+  it('HIT at health=1 → GAME_OVER with healthChange -1', () => {
+    const result = nextStateAfterResolve('HIT', 1);
+    expect(result).toEqual({ healthChange: -1, next: 'GAME_OVER' });
   });
 
-  it('HIT at score 1 (win=3) → NEXT_ROUND', () => {
-    const result = nextStateAfterResolve('HIT', 1, 3);
-    expect(result).toEqual({ scoreChange: 1, next: 'NEXT_ROUND' });
+  it('HIT at health=2 → NEXT_ROUND', () => {
+    const result = nextStateAfterResolve('HIT', 2);
+    expect(result).toEqual({ healthChange: -1, next: 'NEXT_ROUND' });
   });
 
-  it('CLASH → SWAP with no score change', () => {
-    const result = nextStateAfterResolve('CLASH', 2, WIN_SCORE);
-    expect(result).toEqual({ scoreChange: 0, next: 'SWAP' });
+  it('CLASH → SWAP with no health change', () => {
+    const result = nextStateAfterResolve('CLASH', 2);
+    expect(result).toEqual({ healthChange: 0, next: 'SWAP' });
   });
 
-  it('BLOCKED → SWAP with no score change', () => {
-    const result = nextStateAfterResolve('BLOCKED', 1, WIN_SCORE);
-    expect(result).toEqual({ scoreChange: 0, next: 'SWAP' });
+  it('BLOCKED → SWAP with no health change', () => {
+    const result = nextStateAfterResolve('BLOCKED', 1);
+    expect(result).toEqual({ healthChange: 0, next: 'SWAP' });
   });
 
-  it('HIT beyond win score still returns GAME_OVER', () => {
-    const result = nextStateAfterResolve('HIT', WIN_SCORE, WIN_SCORE);
-    expect(result).toEqual({ scoreChange: 1, next: 'GAME_OVER' });
+  it('HIT at health=0 → still GAME_OVER (edge case)', () => {
+    const result = nextStateAfterResolve('HIT', 0);
+    expect(result).toEqual({ healthChange: -1, next: 'GAME_OVER' });
   });
 });

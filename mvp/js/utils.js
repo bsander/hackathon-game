@@ -21,6 +21,12 @@ export function keysForPlayer(p) {
   return p === 1 ? P1_KEYS : P2_KEYS;
 }
 
+export function playerForKey(key) {
+  if (key in P1_KEYS) return 1;
+  if (key in P2_KEYS) return 2;
+  return null;
+}
+
 export function keyListForPlayer(p) {
   return p === 1 ? ['1', '2', '3'] : ['8', '9', '0'];
 }

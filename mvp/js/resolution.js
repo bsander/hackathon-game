@@ -23,15 +23,14 @@ export function resolveSpells(attackSpell, defendSpell) {
 
 /**
  * Given an outcome, determine what happens next.
- * currentScore is the attacker's score BEFORE this round.
+ * currentHealth is the defender's health BEFORE this round.
  */
-export function nextStateAfterResolve(outcome, currentScore, winScore) {
+export function nextStateAfterResolve(outcome, currentHealth) {
   if (outcome === 'HIT') {
-    const newScore = currentScore + 1;
     return {
-      scoreChange: 1,
-      next: newScore >= winScore ? 'GAME_OVER' : 'NEXT_ROUND',
+      healthChange: -1,
+      next: currentHealth - 1 <= 0 ? 'GAME_OVER' : 'NEXT_ROUND',
     };
   }
-  return { scoreChange: 0, next: 'SWAP' };
+  return { healthChange: 0, next: 'SWAP' };
 }

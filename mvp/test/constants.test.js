@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { SPELLS, BEATS, P1_KEYS, P2_KEYS, WIN_SCORE } from '../js/constants.js';
+import { SPELLS, BEATS, P1_KEYS, P2_KEYS, START_HEALTH } from '../js/constants.js';
 
 describe('SPELLS', () => {
   it('has exactly three spells', () => {
@@ -47,9 +47,9 @@ describe('key mappings', () => {
   });
 });
 
-describe('WIN_SCORE', () => {
+describe('START_HEALTH', () => {
   it('is a positive integer', () => {
-    expect(WIN_SCORE).toBeGreaterThan(0);
-    expect(Number.isInteger(WIN_SCORE)).toBe(true);
+    expect(START_HEALTH).toBeGreaterThan(0);
+    expect(Number.isInteger(START_HEALTH)).toBe(true);
   });
 });

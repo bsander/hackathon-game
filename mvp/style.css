@@ -68,6 +68,7 @@ body {
   align-items: center;
   gap: 8px;
   width: 160px;
+  position: relative;
 }
 
 .avatar {
@@ -85,6 +86,11 @@ body {
 
 .player-col.attacker .avatar { border-color: #e04040; }
 .player-col.defender .avatar { border-color: #4080e0; }
+
+.player-col.attacker { box-shadow: 0 0 20px rgba(224, 64, 64, 0.4); }
+.player-col.defender { box-shadow: 0 0 20px rgba(64, 128, 224, 0.4); }
+.player-col.inactive { opacity: 0.4; transition: opacity 0.3s; }
+.spell-panel.inactive { opacity: 0.4; transition: opacity 0.3s; }
 
 .player-name { font-size: 14px; color: #aaa; }
 .player-role { font-size: 12px; font-weight: bold; text-transform: uppercase; }
@@ -221,10 +227,10 @@ body {
 
 /* Morph feedback */
 .spell-slot .morph-label {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: bold;
   margin-left: 6px;
-  animation: morph-fade 0.6s ease-out forwards;
+  animation: morph-fade 1.5s ease-out forwards;
 }
 
 .morph-label.degrade { color: #e04040; }
@@ -237,19 +243,87 @@ body {
 }
 
 @keyframes morph-flash-red {
-  0% { background: #3a1020; }
+  0% { background: #3a1020; border-color: #e04040; }
   100% { background: #1a1a2e; }
 }
 
 @keyframes morph-flash-green {
-  0% { background: #103a20; }
+  0% { background: #103a20; border-color: #40e040; }
   100% { background: #1a1a2e; }
 }
 
-.spell-slot.morph-degrade { animation: morph-flash-red 0.6s ease-out; }
-.spell-slot.morph-restore { animation: morph-flash-green 0.6s ease-out; }
-.spell-slot.chaos.morph-degrade { animation: morph-flash-red 0.6s ease-out; }
-.spell-slot.chaos.morph-restore { animation: morph-flash-green 0.6s ease-out; }
+.spell-slot.morph-degrade { animation: morph-flash-red 1.5s ease-out; }
+.spell-slot.morph-restore { animation: morph-flash-green 1.5s ease-out; }
+.spell-slot.chaos.morph-degrade { animation: morph-flash-red 1.5s ease-out; }
+.spell-slot.chaos.morph-restore { animation: morph-flash-green 1.5s ease-out; }
+
+/* Backfire & fizzle */
+.fizzle-label, .backfire-label {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  font-weight: bold;
+  white-space: nowrap;
+  animation: float-up 0.8s ease-out forwards;
+  pointer-events: none;
+  z-index: 16;
+}
+
+.fizzle-label { color: #888; }
+.fizzle-label.warning { color: #e0a020; }
+.backfire-label { color: #e04040; font-size: 16px; }
+
+@keyframes float-up {
+  0% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-30px); }
+}
+
+@keyframes flash-backfire {
+  0% { box-shadow: 0 0 30px rgba(224, 64, 64, 0.8); }
+  100% { box-shadow: none; }
+}
+
+.player-col.flash-backfire { animation: flash-backfire 0.6s ease-out; }
+
+/* Commitment ceremony */
+@keyframes flash-commit {
+  0% { box-shadow: 0 0 25px rgba(240, 192, 64, 0.8); }
+  100% { box-shadow: none; }
+}
+
+.player-col.flash-commit { animation: flash-commit 0.3s ease-out; }
+
+.commit-label {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 14px;
+  font-weight: bold;
+  color: #f0c040;
+  white-space: nowrap;
+  animation: float-up 0.5s ease-out forwards;
+  pointer-events: none;
+  z-index: 16;
+}
+
+/* Pip shatter */
+@keyframes pip-shatter {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.5); opacity: 0.5; }
+  100% { transform: scale(0); opacity: 0; }
+}
+
+.pip.shatter { animation: pip-shatter 0.4s ease-out forwards; }
+
+@keyframes flash-column-red {
+  0% { background: rgba(224, 64, 64, 0.2); }
+  100% { background: transparent; }
+}
+
+.player-col.flash-hit { animation: flash-column-red 0.5s ease-out; }
 
 /* Hit flash animation */
 @keyframes flash-red {
@@ -258,6 +332,28 @@ body {
 }
 
 .avatar.flash { animation: flash-red 0.4s ease-out; }
+
+/* Instruction bar */
+#instruction-bar {
+  text-align: center;
+  padding: 8px 16px;
+  font-size: 16px;
+  color: #ccc;
+  border-top: 1px solid #333;
+  min-height: 36px;
+  position: relative;
+  z-index: 15;
+}
+
+/* RPS Legend */
+#rps-legend {
+  position: absolute;
+  bottom: 4px;
+  right: 8px;
+  font-size: 11px;
+  color: #555;
+  z-index: 15;
+}
 
 /* Paused overlay */
 #paused {

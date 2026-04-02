@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { randBetween, shuffleArray, otherPlayer, keysForPlayer, keyListForPlayer } from '../js/utils.js';
+import { randBetween, shuffleArray, otherPlayer, keysForPlayer, keyListForPlayer, playerForKey } from '../js/utils.js';
 import { P1_KEYS, P2_KEYS } from '../js/constants.js';
 
 describe('otherPlayer', () => {
@@ -69,5 +69,31 @@ describe('keyListForPlayer', () => {
 
   it('returns correct keys for player 2', () => {
     expect(keyListForPlayer(2)).toEqual(['8', '9', '0']);
+  });
+});
+
+describe('playerForKey', () => {
+  it('returns 1 for each P1 key', () => {
+    expect(playerForKey('1')).toBe(1);
+    expect(playerForKey('2')).toBe(1);
+    expect(playerForKey('3')).toBe(1);
+  });
+
+  it('returns 2 for each P2 key', () => {
+    expect(playerForKey('8')).toBe(2);
+    expect(playerForKey('9')).toBe(2);
+    expect(playerForKey('0')).toBe(2);
+  });
+
+  it('returns null for space', () => {
+    expect(playerForKey(' ')).toBeNull();
+  });
+
+  it('returns null for a letter key', () => {
+    expect(playerForKey('a')).toBeNull();
+  });
+
+  it('returns null for an unrelated number', () => {
+    expect(playerForKey('5')).toBeNull();
   });
 });

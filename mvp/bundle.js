@@ -1,7 +1,9 @@
 (() => {
   // mvp/js/constants.js
   var BEATS = { Fireball: "Hex", Shield: "Fireball", Hex: "Shield" };
-  var WIN_SCORE = 3;
+  var P1_KEYS = { "1": "Fireball", "2": "Shield", "3": "Hex" };
+  var P2_KEYS = { "8": "Fireball", "9": "Shield", "0": "Hex" };
+  var START_HEALTH = 3;
   var CHAOS = "Chaos";
   var SLOT_DEFAULTS = ["Fireball", "Shield", "Hex"];
 
@@ -11,6 +13,11 @@
   }
   function otherPlayer(p) {
     return p === 1 ? 2 : 1;
+  }
+  function playerForKey(key) {
+    if (key in P1_KEYS) return 1;
+    if (key in P2_KEYS) return 2;
+    return null;
   }
   function keyListForPlayer(p) {
     return p === 1 ? ["1", "2", "3"] : ["8", "9", "0"];
@@ -33,22 +40,21 @@
     }
     return { outcome: "HIT", attackSpell: attackSpell2, defendSpell: defendSpell2 };
   }
-  function nextStateAfterResolve(outcome, currentScore, winScore) {
+  function nextStateAfterResolve(outcome, currentHealth) {
     if (outcome === "HIT") {
-      const newScore = currentScore + 1;
       return {
-        scoreChange: 1,
-        next: newScore >= winScore ? "GAME_OVER" : "NEXT_ROUND"
+        healthChange: -1,
+        next: currentHealth - 1 <= 0 ? "GAME_OVER" : "NEXT_ROUND"
       };
     }
-    return { scoreChange: 0, next: "SWAP" };
+    return { healthChange: 0, next: "SWAP" };
   }
 
   // mvp/js/game.js
   var state = "IDLE";
   var activeTimer = null;
   var rafId = null;
-  var scores = { 1: 0, 2: 0 };
+  var health = { 1: START_HEALTH, 2: START_HEALTH };
   var round = 1;
   var attacker = 1;
   var attackSpell = null;
@@ -59,6 +65,9 @@
   var countdownDuration = 0;
   var paused = false;
   var pausedRemaining = 0;
+  var misfireCount = { 1: 0, 2: 0 };
+  var pendingMorphEvents = [];
+  var pendingNextState = null;
   var playerSlots = { 1: [...SLOT_DEFAULTS], 2: [...SLOT_DEFAULTS] };
   function resetAllSlots() {
     playerSlots[1] = [...SLOT_DEFAULTS];
@@ -99,6 +108,9 @@
     1: [document.getElementById("p1-slot-0"), document.getElementById("p1-slot-1"), document.getElementById("p1-slot-2")],
     2: [document.getElementById("p2-slot-0"), document.getElementById("p2-slot-1"), document.getElementById("p2-slot-2")]
   };
+  var $p1Panel = document.getElementById("p1-panel");
+  var $p2Panel = document.getElementById("p2-panel");
+  var $instructionBar = document.getElementById("instruction-bar");
   function clearTimer() {
     if (activeTimer !== null) {
       clearTimeout(activeTimer);
@@ -113,7 +125,7 @@
     for (let p = 1; p <= 2; p++) {
       for (let i = 0; i < 3; i++) {
         const pip = document.getElementById(`p${p}-pip-${i}`);
-        pip.classList.toggle("filled", i < scores[p]);
+        pip.classList.toggle("filled", i < health[p]);
       }
     }
   }
@@ -122,8 +134,12 @@
     const defCol = attacker === 1 ? $p2Col : $p1Col;
     const atkRole = attacker === 1 ? $p1Role : $p2Role;
     const defRole = attacker === 1 ? $p2Role : $p1Role;
-    $p1Col.classList.remove("attacker", "defender");
-    $p2Col.classList.remove("attacker", "defender");
+    const atkPanel = attacker === 1 ? $p1Panel : $p2Panel;
+    const defPanel = attacker === 1 ? $p2Panel : $p1Panel;
+    $p1Col.classList.remove("attacker", "defender", "inactive");
+    $p2Col.classList.remove("attacker", "defender", "inactive");
+    $p1Panel.classList.remove("inactive");
+    $p2Panel.classList.remove("inactive");
     if (state === "IDLE" || state === "GAME_OVER") {
       atkRole.textContent = "";
       defRole.textContent = "";
@@ -131,8 +147,16 @@
     }
     atkCol.classList.add("attacker");
     defCol.classList.add("defender");
+    defCol.classList.add("inactive");
+    defPanel.classList.add("inactive");
     atkRole.textContent = "attacker";
     defRole.textContent = "defender";
+    if (state === "DEFEND_PHASE") {
+      atkCol.classList.add("inactive");
+      atkPanel.classList.add("inactive");
+      defCol.classList.remove("inactive");
+      defPanel.classList.remove("inactive");
+    }
   }
   var SPELL_EMOJI = { Fireball: "\u{1F525}", Shield: "\u{1F6E1}", Hex: "\u{1F480}", Chaos: "\u{1F300}" };
   function renderSlots() {
@@ -145,6 +169,35 @@
         el.innerHTML = `<span class="key">[${keys[i]}]</span> <span class="slot-name">${spell}</span> <span class="slot-emoji">${emoji}</span>`;
         el.classList.toggle("chaos", spell === CHAOS);
       }
+    }
+  }
+  function renderInstructionBar() {
+    const EMOJI = { Fireball: "\u{1F525}", Shield: "\u{1F6E1}", Hex: "\u{1F480}", Chaos: "\u2753" };
+    function slotLabel(player) {
+      const keys = keyListForPlayer(player);
+      return keys.map((k, i) => {
+        const spell = playerSlots[player][i];
+        return `[${k}] ${spell} ${EMOJI[spell] || "\u2753"}`;
+      }).join("  ");
+    }
+    switch (state) {
+      case "IDLE":
+        $instructionBar.textContent = "Press SPACE to begin the duel";
+        break;
+      case "ATTACK_PHASE":
+        $instructionBar.textContent = `P${attacker}: Cast \u2192 ${slotLabel(attacker)}`;
+        break;
+      case "DEFEND_PHASE": {
+        const def = otherPlayer(attacker);
+        $instructionBar.textContent = `P${def}: Counter ${attackSpell.toUpperCase()} \u2192 ${slotLabel(def)}`;
+        break;
+      }
+      case "GAME_OVER":
+        $instructionBar.textContent = "Press SPACE to play again";
+        break;
+      default:
+        $instructionBar.textContent = "";
+        break;
     }
   }
   function startCountdownBar(durationMs) {
@@ -197,7 +250,7 @@
       setTimeout(() => {
         labelEl.remove();
         el.classList.remove("morph-degrade", "morph-restore");
-      }, 600);
+      }, 1500);
     }
   }
   function flashAvatar(player) {
@@ -206,20 +259,87 @@
     void av.offsetWidth;
     av.classList.add("flash");
   }
+  function flashColumn(player, cssClass) {
+    const col = player === 1 ? $p1Col : $p2Col;
+    col.classList.remove(cssClass);
+    void col.offsetWidth;
+    col.classList.add(cssClass);
+  }
+  function showCommitLabel(player) {
+    const col = player === 1 ? $p1Col : $p2Col;
+    const el = document.createElement("div");
+    el.className = "commit-label";
+    el.textContent = "\u2726 LOCKED IN";
+    col.appendChild(el);
+    setTimeout(() => el.remove(), 500);
+  }
+  function shatterPip(player, pipIndex) {
+    const pip = document.getElementById(`p${player}-pip-${pipIndex}`);
+    pip.classList.remove("shatter");
+    void pip.offsetWidth;
+    pip.classList.add("shatter");
+    flashColumn(player, "flash-hit");
+  }
+  function showBackfireWarning(player) {
+    const col = player === 1 ? $p1Col : $p2Col;
+    const el = document.createElement("div");
+    el.className = "fizzle-label warning";
+    el.textContent = "Careful!";
+    col.appendChild(el);
+    setTimeout(() => el.remove(), 800);
+    flashAvatar(player);
+  }
+  function triggerBackfire(player) {
+    if (health[player] <= 0) return;
+    health[player] -= 1;
+    renderPips();
+    shatterPip(player, health[player]);
+    flashAvatar(player);
+    flashColumn(player, "flash-backfire");
+    const col = player === 1 ? $p1Col : $p2Col;
+    const el = document.createElement("div");
+    el.className = "backfire-label";
+    el.textContent = "BACKFIRE!";
+    col.appendChild(el);
+    setTimeout(() => el.remove(), 1e3);
+    if (health[player] <= 0) {
+      clearTimer();
+      enterState("GAME_OVER");
+    }
+  }
+  function advanceFromMorph() {
+    $phaseLabel.style.color = "#ccc";
+    const ns = pendingNextState;
+    pendingNextState = null;
+    pendingMorphEvents = [];
+    if (ns === "GAME_OVER") {
+      enterState("GAME_OVER");
+    } else if (ns === "NEXT_ROUND") {
+      round++;
+      attacker = Math.random() < 0.5 ? 1 : 2;
+      resetAllSlots();
+      enterState("ATTACK_PHASE");
+    } else {
+      attacker = otherPlayer(attacker);
+      enterState("ATTACK_PHASE");
+    }
+  }
   function enterState(newState) {
     clearTimer();
     state = newState;
     switch (state) {
       case "IDLE":
         $spellBanner.textContent = "ARCANE AKASH";
-        $phaseLabel.textContent = "Press any key to start";
+        $phaseLabel.textContent = "";
         hideCountdown();
         hideOverlay();
         renderRoles();
         renderPips();
         renderSlots();
+        renderInstructionBar();
         break;
       case "ATTACK_PHASE": {
+        misfireCount = { 1: 0, 2: 0 };
         attackSpell = null;
         attackSlotIndex = null;
         defendSpell = null;
@@ -228,8 +348,9 @@
         renderRoles();
         renderPips();
         $spellBanner.textContent = "";
-        $phaseLabel.textContent = `PLAYER ${attacker} \u2014 ATTACK!`;
+        $phaseLabel.textContent = `P${attacker} \u2694\uFE0F ATTACK`;
         renderSlots();
+        renderInstructionBar();
         const duration = 3e3;
         startCountdownBar(duration);
         activeTimer = setTimeout(() => {
@@ -250,10 +371,13 @@
         break;
       }
       case "DEFEND_PHASE": {
+        misfireCount = { 1: 0, 2: 0 };
         const def = otherPlayer(attacker);
         $spellBanner.textContent = `>>> ${attackSpell.toUpperCase()}! >>>`;
-        $phaseLabel.textContent = `PLAYER ${def} \u2014 DEFEND!`;
+        $phaseLabel.textContent = `P${def} \u{1F6E1} DEFEND`;
+        renderRoles();
         renderSlots();
+        renderInstructionBar();
         const duration = randBetween(1600, 2400);
         startCountdownBar(duration);
         activeTimer = setTimeout(() => {
@@ -275,14 +399,29 @@
           enterState("ATTACK_PHASE");
         }, 1500);
         break;
+      case "MORPH_DISPLAY": {
+        hideOverlay();
+        $spellBanner.textContent = "";
+        $phaseLabel.textContent = "SPELLS SHIFTING...";
+        $phaseLabel.style.color = "#c090ff";
+        renderSlots();
+        showMorphFeedback(pendingMorphEvents);
+        renderInstructionBar();
+        const morphDuration = 1500;
+        countdownStart = performance.now();
+        countdownDuration = morphDuration;
+        activeTimer = setTimeout(advanceFromMorph, morphDuration);
+        break;
+      }
       case "GAME_OVER": {
-        const winner = scores[1] >= WIN_SCORE ? 1 : 2;
+        const winner = health[1] <= 0 ? 2 : 1;
         hideCountdown();
         renderRoles();
         renderPips();
         $spellBanner.textContent = "";
         $phaseLabel.textContent = "";
-        showOverlay(`PLAYER ${winner} WINS!`, "Press any key to restart", "#f0c040");
+        showOverlay(`PLAYER ${winner} WINS!`, "", "#f0c040");
+        renderInstructionBar();
         break;
       }
       default:
@@ -317,10 +456,14 @@
     $spellBanner.textContent = "";
     $phaseLabel.textContent = "";
     showOverlay(text, sub, colour);
-    const next = nextStateAfterResolve(result.outcome, scores[attacker], WIN_SCORE);
-    if (next.scoreChange) {
-      scores[attacker] += next.scoreChange;
+    const next = nextStateAfterResolve(result.outcome, health[def]);
+    if (next.healthChange) {
+      const oldHealth = health[def];
+      health[def] += next.healthChange;
       renderPips();
+      if (health[def] < oldHealth) {
+        shatterPip(def, health[def]);
+      }
     }
     const morphEvents = [];
     if (attackSlotIndex !== null) {
@@ -341,31 +484,22 @@
       }
     }
     renderSlots();
-    showMorphFeedback(morphEvents);
-    if (next.next === "GAME_OVER") {
-      activeTimer = setTimeout(() => {
+    pendingMorphEvents = morphEvents;
+    pendingNextState = next.next;
+    const overlayDuration = 1200;
+    activeTimer = setTimeout(() => {
+      if (morphEvents.length > 0) {
+        enterState("MORPH_DISPLAY");
+      } else {
         hideOverlay();
-        enterState("GAME_OVER");
-      }, 1500);
-    } else if (next.next === "NEXT_ROUND") {
-      activeTimer = setTimeout(() => {
-        hideOverlay();
-        round++;
-        attacker = Math.random() < 0.5 ? 1 : 2;
-        resetAllSlots();
-        enterState("ATTACK_PHASE");
-      }, 1500);
-    } else {
-      activeTimer = setTimeout(() => {
-        hideOverlay();
-        attacker = otherPlayer(attacker);
-        enterState("ATTACK_PHASE");
-      }, 1200);
-    }
+        advanceFromMorph();
+      }
+    }, overlayDuration);
   }
   var HANDLERS = {
-    IDLE(_key) {
-      scores = { 1: 0, 2: 0 };
+    IDLE(key) {
+      if (key !== " ") return;
+      health = { 1: START_HEALTH, 2: START_HEALTH };
       round = 1;
       attacker = Math.random() < 0.5 ? 1 : 2;
       resetAllSlots();
@@ -376,6 +510,8 @@
       if (!(key in atkMap)) return;
       attackSlotIndex = slotIndexForKey(attacker, key);
       attackSpell = atkMap[key];
+      flashColumn(attacker, "flash-commit");
+      showCommitLabel(attacker);
       enterState("REVEAL_DELAY");
     },
     DEFEND_PHASE(key) {
@@ -385,20 +521,35 @@
       if (!(key in defMap)) return;
       defendSlotIndex = slotIndexForKey(def, key);
       defendSpell = defMap[key];
+      flashColumn(def, "flash-commit");
+      showCommitLabel(def);
       resolve("CAST");
     },
-    GAME_OVER(_key) {
+    GAME_OVER(key) {
+      if (key !== " ") return;
       enterState("IDLE");
     }
   };
   window.addEventListener("keydown", (e) => {
     if (paused) return;
+    const key = e.key;
+    const keyOwner = playerForKey(key);
+    const activePlayer = state === "ATTACK_PHASE" ? attacker : state === "DEFEND_PHASE" ? otherPlayer(attacker) : null;
+    if (activePlayer !== null && keyOwner !== null && keyOwner !== activePlayer) {
+      misfireCount[keyOwner] += 1;
+      if (misfireCount[keyOwner] === 1) {
+        showBackfireWarning(keyOwner);
+      } else {
+        triggerBackfire(keyOwner);
+      }
+      return;
+    }
     const handler = HANDLERS[state];
-    if (handler) handler(e.key);
+    if (handler) handler(key);
   });
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
-      if (state === "ATTACK_PHASE" || state === "DEFEND_PHASE" || state === "REVEAL_DELAY") {
+      if (state === "ATTACK_PHASE" || state === "DEFEND_PHASE" || state === "REVEAL_DELAY" || state === "MORPH_DISPLAY") {
         paused = true;
         $pausedOverlay.classList.add("visible");
         if (activeTimer !== null) {
@@ -429,6 +580,8 @@
           }, pausedRemaining);
         } else if (state === "REVEAL_DELAY") {
           activeTimer = setTimeout(() => enterState("DEFEND_PHASE"), pausedRemaining);
+        } else if (state === "MORPH_DISPLAY") {
+          activeTimer = setTimeout(advanceFromMorph, pausedRemaining);
         }
       }
     }
