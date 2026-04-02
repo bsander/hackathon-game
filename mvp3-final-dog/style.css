@@ -18,7 +18,7 @@ body {
   display: flex;
   flex-direction: column;
   position: relative;
-  transform: scale(1.35);
+  transform: scale(1.6);
   transform-origin: center center;
 }
 
