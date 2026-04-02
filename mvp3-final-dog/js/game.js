@@ -8,6 +8,18 @@ import {
   applyReaction, checkExplosion,
 } from './ingredients.js';
 
+// ── Background music ─────────────────────────────────────────
+const bgMusic = new Audio('Bubble Brew Arcade.mp3');
+bgMusic.loop = true;
+bgMusic.volume = 0.4;
+let musicStarted = false;
+
+function startMusic() {
+  if (musicStarted) return;
+  musicStarted = true;
+  bgMusic.play().catch(() => {});   // silent catch — browser may still block
+}
+
 // ── Game state ────────────────────────────────────────────────
 let gameState = 'IDLE';       // IDLE | COUNTDOWN | ROUND_ACTIVE | EXPLODING | ROUND_PAUSE | GAME_OVER
 let health = { 1: START_HEALTH, 2: START_HEALTH };
@@ -358,6 +370,7 @@ document.addEventListener('keydown', (e) => {
     if (e.key !== ' ') return;
     if (onboardingScreen === 1) {
       // Advance from Screen 1 to Screen 2
+      startMusic();
       onboardingScreen = 2;
       showOnboarding();
       return;

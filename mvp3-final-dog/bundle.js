@@ -166,6 +166,16 @@
   }
 
   // mvp3-final-dog/js/game.js
+  var bgMusic = new Audio("Bubble Brew Arcade.mp3");
+  bgMusic.loop = true;
+  bgMusic.volume = 0.4;
+  var musicStarted = false;
+  function startMusic() {
+    if (musicStarted) return;
+    musicStarted = true;
+    bgMusic.play().catch(() => {
+    });
+  }
   var gameState = "IDLE";
   var health = { 1: START_HEALTH, 2: START_HEALTH };
   var round = 1;
@@ -455,6 +465,7 @@
     if (gameState === "IDLE") {
       if (e.key !== " ") return;
       if (onboardingScreen === 1) {
+        startMusic();
         onboardingScreen = 2;
         showOnboarding();
         return;
