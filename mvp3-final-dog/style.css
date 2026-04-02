@@ -156,49 +156,11 @@ body {
   max-width: 360px;
 }
 
-/* ── Direction bar ─────────────────────────────────────────── */
+/* ── Direction container (reserved for future use) ────────── */
 #direction-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
+  display: none;
 }
 
-.dir-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: #666;
-  min-width: 24px;
-  text-align: center;
-}
-
-#direction-bar {
-  flex: 1;
-  height: 20px;
-  border-radius: 10px;
-  background: #1a1a3a;
-  border: 1px solid #3a3a5a;
-  position: relative;
-  overflow: hidden;
-}
-
-#direction-fill {
-  position: absolute;
-  top: 0;
-  height: 100%;
-  transition: all 0.15s ease-out;
-  border-radius: 10px;
-}
-
-#direction-fill.p1-danger {
-  background: linear-gradient(90deg, #e04040, #e04040aa);
-  left: 0;
-}
-
-#direction-fill.p2-danger {
-  background: linear-gradient(270deg, #4080e0, #4080e0aa);
-  right: 0;
-}
 
 /* ── Cauldron ──────────────────────────────────────────────── */
 #cauldron {
@@ -253,6 +215,13 @@ body {
 #cauldron-arrow.arrow-p2 {
   right: -36px;
   color: #4080e0;
+}
+
+#cauldron-arrow.arrow-neutral {
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #666;
+  font-size: 22px;
 }
 
 #reaction-label {
@@ -398,6 +367,31 @@ body {
   margin-bottom: 4px;
 }
 
+.onboarding-ingredients {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+  font-size: 13px;
+  color: #ccc;
+  margin: 0 auto 16px;
+  max-width: 340px;
+}
+
+.onboarding-ingredients strong {
+  color: #f0c040;
+}
+
+.onboarding-tip {
+  color: #f0c040 !important;
+  font-style: italic;
+}
+
+.onboarding-hint {
+  font-size: 12px !important;
+  color: #777 !important;
+}
+
 .onboarding-start {
   font-size: 16px;
   color: #f0c040;
@@ -415,7 +409,7 @@ body {
 
 .onboarding-key-list {
   display: grid;
-  grid-template-columns: repeat(10, 1fr);
+  grid-template-columns: repeat(9, 1fr);
   gap: 8px;
   margin-bottom: 16px;
   max-width: 400px;

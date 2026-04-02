@@ -1,7 +1,7 @@
 import {
   PRESSURE_THRESHOLD, START_HEALTH, COOLDOWN_MS, FIREBALL_COOLDOWN_MS,
   COUNTDOWN_SECS, PAUSE_BETWEEN_ROUNDS_MS,
-  ingredientForKey, getRandomKeyBinding, INGREDIENT_ORDER,
+  ingredientForKey, getRandomKeyBinding, randomizeOneKey, INGREDIENT_ORDER,
 } from './constants.js';
 import {
   freshRoundState, applyIngredient, checkReaction,
@@ -28,7 +28,6 @@ const $roundLabel = $('round-label');
 const $overlay = $('overlay');
 const $overlayText = $('overlay-text');
 const $overlaySub = $('overlay-sub');
-const $directionFill = $('direction-fill');
 const $pressureFill = $('pressure-fill');
 const $cauldron = $('cauldron');
 const $cauldronEmoji = $('cauldron-emoji');
@@ -60,22 +59,6 @@ function renderPips() {
 function renderDirection() {
   const dir = cauldron.direction;
 
-  // Fill bar
-  $directionFill.className = '';
-  if (dir < 0) {
-    $directionFill.classList.add('p1-danger');
-    $directionFill.style.width = `${(Math.abs(dir) / 10) * 50}%`;
-    $directionFill.style.right = '';
-    $directionFill.style.left = '0';
-  } else if (dir > 0) {
-    $directionFill.classList.add('p2-danger');
-    $directionFill.style.width = `${(dir / 10) * 50}%`;
-    $directionFill.style.left = '';
-    $directionFill.style.right = '0';
-  } else {
-    $directionFill.style.width = '0%';
-  }
-
   // Cauldron arrow — shows which way the explosion will go
   if (dir < 0) {
     $cauldronArrow.textContent = '←';
@@ -84,8 +67,8 @@ function renderDirection() {
     $cauldronArrow.textContent = '→';
     $cauldronArrow.className = 'arrow-active arrow-p2';
   } else {
-    $cauldronArrow.textContent = '';
-    $cauldronArrow.className = '';
+    $cauldronArrow.textContent = '⚖';
+    $cauldronArrow.className = 'arrow-active arrow-neutral';
   }
 
   // Danger colouring on pips at extreme direction
@@ -237,23 +220,16 @@ function showOnboarding() {
     $overlayText.innerHTML = 'CAULDRON TUG-OF-WAR';
     $overlaySub.innerHTML = [
       '<div class="onboarding">',
-      '<p class="onboarding-concept">Both players throw ingredients into the cauldron.<br>When pressure maxes out, it explodes — the direction bar decides who takes damage.</p>',
-      '<div class="onboarding-cols">',
-      '<div class="onboarding-col">',
-      '<strong>P1</strong>',
-      '<span>[1] 🔥 Scald — big push, slow recharge</span>',
-      '<span>[2] 🧊 Cool — reduces pressure</span>',
-      '<span>[3] 🌀 Swirl — reverses direction</span>',
-      '<span>[4] ✨ Boost — charges next spell</span>',
+      '<p class="onboarding-concept">Two brewers. One cauldron. Toss ingredients to build pressure — when it blows, the <strong>arrow</strong> decides who takes the blast.</p>',
+      '<p class="onboarding-concept">Push the explosion toward your opponent. Reverse it when it points at you.</p>',
+      '<div class="onboarding-ingredients">',
+      '<span>🔥 <strong>Scald</strong> — big pressure push, slow recharge</span>',
+      '<span>🧊 <strong>Cool</strong> — reduces pressure</span>',
+      '<span>🌀 <strong>Swirl</strong> — reverses the arrow</span>',
+      '<span>✨ <strong>Boost</strong> — charges your next spell</span>',
       '</div>',
-      '<div class="onboarding-col">',
-      '<strong>P2</strong>',
-      '<span>[7] 🔥 Scald</span>',
-      '<span>[8] 🧊 Cool</span>',
-      '<span>[9] 🌀 Swirl</span>',
-      '<span>[0] ✨ Boost</span>',
-      '</div>',
-      '</div>',
+      '<p class="onboarding-concept onboarding-tip">What happens also depends on what your opponent throws in — expect some mayhem!</p>',
+      '<p class="onboarding-concept onboarding-hint">Keys are shown on screen and shuffle after each press.</p>',
       '<p class="onboarding-start">Press SPACE to continue</p>',
       '</div>',
     ].join('');
@@ -275,16 +251,41 @@ function showOnboarding() {
       '<span class="onboarding-key-item">8</span>',
       '<span class="onboarding-key-item">9</span>',
       '<span class="onboarding-key-item">0</span>',
-      '<span class="onboarding-key-item">q</span>',
-      '<span class="onboarding-key-item">w</span>',
-      '<span class="onboarding-key-item">e</span>',
-      '<span class="onboarding-key-item">r</span>',
-      '<span class="onboarding-key-item">t</span>',
+      '<span class="onboarding-key-item">1</span>',
+      '<span class="onboarding-key-item">2</span>',
+      '<span class="onboarding-key-item">3</span>',
+      '<span class="onboarding-key-item">4</span>',
+      '<span class="onboarding-key-item">5</span>',
+      '<span class="onboarding-key-item">6</span>',
+      '<span class="onboarding-key-item">7</span>',
+      '<span class="onboarding-key-item">8</span>',
+      '<span class="onboarding-key-item">9</span>',
       '<span class="onboarding-key-item">a</span>',
-      '<span class="onboarding-key-item">s</span>',
+      '<span class="onboarding-key-item">b</span>',
+      '<span class="onboarding-key-item">c</span>',
       '<span class="onboarding-key-item">d</span>',
+      '<span class="onboarding-key-item">e</span>',
       '<span class="onboarding-key-item">f</span>',
       '<span class="onboarding-key-item">g</span>',
+      '<span class="onboarding-key-item">h</span>',
+      '<span class="onboarding-key-item">i</span>',
+      '<span class="onboarding-key-item">j</span>',
+      '<span class="onboarding-key-item">k</span>',
+      '<span class="onboarding-key-item">l</span>',
+      '<span class="onboarding-key-item">m</span>',
+      '<span class="onboarding-key-item">n</span>',
+      '<span class="onboarding-key-item">o</span>',
+      '<span class="onboarding-key-item">p</span>',
+      '<span class="onboarding-key-item">q</span>',
+      '<span class="onboarding-key-item">r</span>',
+      '<span class="onboarding-key-item">s</span>',
+      '<span class="onboarding-key-item">t</span>',
+      '<span class="onboarding-key-item">u</span>',
+      '<span class="onboarding-key-item">v</span>',
+      '<span class="onboarding-key-item">w</span>',
+      '<span class="onboarding-key-item">x</span>',
+      '<span class="onboarding-key-item">y</span>',
+      '<span class="onboarding-key-item">z</span>',
       '</div>',
       '<p class="onboarding-start">Press SPACE to start</p>',
       '</div>',
@@ -449,9 +450,25 @@ document.addEventListener('keydown', (e) => {
 
   renderAll();
 
-  // Randomize key bindings after successful press
-  currentKeyBindings = getRandomKeyBinding();
-  updateKeyRowsDisplay();
+  // Selectively randomize only the pressed key for that player
+  // Find which ingredient index corresponds to this key for this player
+  const playerKeys = player === 1 ? currentKeyBindings.p1 : currentKeyBindings.p2;
+  const ingredientIndex = playerKeys.indexOf(e.key);
+  if (ingredientIndex !== -1) {
+    currentKeyBindings = randomizeOneKey(currentKeyBindings, player, ingredientIndex);
+
+    // Update only the affected key row in the DOM
+    const prefix = player === 1 ? 'p1' : 'p2';
+    const controlsEl = $(`${prefix}-controls`);
+    const rows = controlsEl.querySelectorAll('.key-row');
+    if (ingredientIndex < rows.length) {
+      const row = rows[ingredientIndex];
+      const newKey = player === 1 ? currentKeyBindings.p1[ingredientIndex] : currentKeyBindings.p2[ingredientIndex];
+      const keyEl = row.querySelector('.key');
+      if (keyEl) keyEl.textContent = newKey;
+      row.dataset.key = newKey;
+    }
+  }
 
   // Check explosion
   const explosion = checkExplosion(cauldron);

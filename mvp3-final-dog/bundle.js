@@ -19,7 +19,7 @@
   var INGREDIENT_ORDER = ["scald", "cool", "swirl", "boost"];
   var P1_KEYS = ["1", "2", "3", "4"];
   var P2_KEYS = ["7", "8", "9", "0"];
-  var ALL_KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "q", "w", "e", "r", "t", "a", "s", "d", "f", "g"];
+  var ALL_KEYS = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"];
   var KEYS_PER_PLAYER = 4;
   function shuffleArray(array) {
     const arr = [...array];
@@ -35,6 +35,24 @@
       p1: shuffled.slice(0, KEYS_PER_PLAYER),
       p2: shuffled.slice(KEYS_PER_PLAYER, KEYS_PER_PLAYER * 2)
     };
+  }
+  function randomizeOneKey(keyBindings, player, ingredientIndex) {
+    const updated = {
+      p1: [...keyBindings.p1],
+      p2: [...keyBindings.p2]
+    };
+    const opponent = player === 1 ? 2 : 1;
+    const opponentKeys = opponent === 1 ? updated.p1 : updated.p2;
+    let newKey;
+    let attempts = 0;
+    const maxAttempts = 100;
+    do {
+      newKey = ALL_KEYS[Math.floor(Math.random() * ALL_KEYS.length)];
+      attempts++;
+    } while (opponentKeys.includes(newKey) && attempts < maxAttempts);
+    const playerKeys = player === 1 ? updated.p1 : updated.p2;
+    playerKeys[ingredientIndex] = newKey;
+    return updated;
   }
   function ingredientForKey(key, keyBindings) {
     const bindings = keyBindings || { p1: P1_KEYS, p2: P2_KEYS };
@@ -165,7 +183,6 @@
   var $overlay = $("overlay");
   var $overlayText = $("overlay-text");
   var $overlaySub = $("overlay-sub");
-  var $directionFill = $("direction-fill");
   var $pressureFill = $("pressure-fill");
   var $cauldron = $("cauldron");
   var $cauldronEmoji = $("cauldron-emoji");
@@ -192,20 +209,6 @@
   }
   function renderDirection() {
     const dir = cauldron.direction;
-    $directionFill.className = "";
-    if (dir < 0) {
-      $directionFill.classList.add("p1-danger");
-      $directionFill.style.width = `${Math.abs(dir) / 10 * 50}%`;
-      $directionFill.style.right = "";
-      $directionFill.style.left = "0";
-    } else if (dir > 0) {
-      $directionFill.classList.add("p2-danger");
-      $directionFill.style.width = `${dir / 10 * 50}%`;
-      $directionFill.style.left = "";
-      $directionFill.style.right = "0";
-    } else {
-      $directionFill.style.width = "0%";
-    }
     if (dir < 0) {
       $cauldronArrow.textContent = "\u2190";
       $cauldronArrow.className = "arrow-active arrow-p1";
@@ -213,8 +216,8 @@
       $cauldronArrow.textContent = "\u2192";
       $cauldronArrow.className = "arrow-active arrow-p2";
     } else {
-      $cauldronArrow.textContent = "";
-      $cauldronArrow.className = "";
+      $cauldronArrow.textContent = "\u2696";
+      $cauldronArrow.className = "arrow-active arrow-neutral";
     }
     const dangerThreshold = 7;
     for (let p = 1; p <= 2; p++) {
@@ -336,23 +339,16 @@
       $overlayText.innerHTML = "CAULDRON TUG-OF-WAR";
       $overlaySub.innerHTML = [
         '<div class="onboarding">',
-        '<p class="onboarding-concept">Both players throw ingredients into the cauldron.<br>When pressure maxes out, it explodes \u2014 the direction bar decides who takes damage.</p>',
-        '<div class="onboarding-cols">',
-        '<div class="onboarding-col">',
-        "<strong>P1</strong>",
-        "<span>[1] \u{1F525} Scald \u2014 big push, slow recharge</span>",
-        "<span>[2] \u{1F9CA} Cool \u2014 reduces pressure</span>",
-        "<span>[3] \u{1F300} Swirl \u2014 reverses direction</span>",
-        "<span>[4] \u2728 Boost \u2014 charges next spell</span>",
+        '<p class="onboarding-concept">Two brewers. One cauldron. Toss ingredients to build pressure \u2014 when it blows, the <strong>arrow</strong> decides who takes the blast.</p>',
+        '<p class="onboarding-concept">Push the explosion toward your opponent. Reverse it when it points at you.</p>',
+        '<div class="onboarding-ingredients">',
+        "<span>\u{1F525} <strong>Scald</strong> \u2014 big pressure push, slow recharge</span>",
+        "<span>\u{1F9CA} <strong>Cool</strong> \u2014 reduces pressure</span>",
+        "<span>\u{1F300} <strong>Swirl</strong> \u2014 reverses the arrow</span>",
+        "<span>\u2728 <strong>Boost</strong> \u2014 charges your next spell</span>",
         "</div>",
-        '<div class="onboarding-col">',
-        "<strong>P2</strong>",
-        "<span>[7] \u{1F525} Scald</span>",
-        "<span>[8] \u{1F9CA} Cool</span>",
-        "<span>[9] \u{1F300} Swirl</span>",
-        "<span>[0] \u2728 Boost</span>",
-        "</div>",
-        "</div>",
+        '<p class="onboarding-concept onboarding-tip">What happens also depends on what your opponent throws in \u2014 expect some mayhem!</p>',
+        '<p class="onboarding-concept onboarding-hint">Keys are shown on screen and shuffle after each press.</p>',
         '<p class="onboarding-start">Press SPACE to continue</p>',
         "</div>"
       ].join("");
@@ -373,16 +369,41 @@
         '<span class="onboarding-key-item">8</span>',
         '<span class="onboarding-key-item">9</span>',
         '<span class="onboarding-key-item">0</span>',
-        '<span class="onboarding-key-item">q</span>',
-        '<span class="onboarding-key-item">w</span>',
-        '<span class="onboarding-key-item">e</span>',
-        '<span class="onboarding-key-item">r</span>',
-        '<span class="onboarding-key-item">t</span>',
+        '<span class="onboarding-key-item">1</span>',
+        '<span class="onboarding-key-item">2</span>',
+        '<span class="onboarding-key-item">3</span>',
+        '<span class="onboarding-key-item">4</span>',
+        '<span class="onboarding-key-item">5</span>',
+        '<span class="onboarding-key-item">6</span>',
+        '<span class="onboarding-key-item">7</span>',
+        '<span class="onboarding-key-item">8</span>',
+        '<span class="onboarding-key-item">9</span>',
         '<span class="onboarding-key-item">a</span>',
-        '<span class="onboarding-key-item">s</span>',
+        '<span class="onboarding-key-item">b</span>',
+        '<span class="onboarding-key-item">c</span>',
         '<span class="onboarding-key-item">d</span>',
+        '<span class="onboarding-key-item">e</span>',
         '<span class="onboarding-key-item">f</span>',
         '<span class="onboarding-key-item">g</span>',
+        '<span class="onboarding-key-item">h</span>',
+        '<span class="onboarding-key-item">i</span>',
+        '<span class="onboarding-key-item">j</span>',
+        '<span class="onboarding-key-item">k</span>',
+        '<span class="onboarding-key-item">l</span>',
+        '<span class="onboarding-key-item">m</span>',
+        '<span class="onboarding-key-item">n</span>',
+        '<span class="onboarding-key-item">o</span>',
+        '<span class="onboarding-key-item">p</span>',
+        '<span class="onboarding-key-item">q</span>',
+        '<span class="onboarding-key-item">r</span>',
+        '<span class="onboarding-key-item">s</span>',
+        '<span class="onboarding-key-item">t</span>',
+        '<span class="onboarding-key-item">u</span>',
+        '<span class="onboarding-key-item">v</span>',
+        '<span class="onboarding-key-item">w</span>',
+        '<span class="onboarding-key-item">x</span>',
+        '<span class="onboarding-key-item">y</span>',
+        '<span class="onboarding-key-item">z</span>',
         "</div>",
         '<p class="onboarding-start">Press SPACE to start</p>',
         "</div>"
@@ -508,8 +529,21 @@
       lastPress[player] = thisPress;
     }
     renderAll();
-    currentKeyBindings = getRandomKeyBinding();
-    updateKeyRowsDisplay();
+    const playerKeys = player === 1 ? currentKeyBindings.p1 : currentKeyBindings.p2;
+    const ingredientIndex = playerKeys.indexOf(e.key);
+    if (ingredientIndex !== -1) {
+      currentKeyBindings = randomizeOneKey(currentKeyBindings, player, ingredientIndex);
+      const prefix = player === 1 ? "p1" : "p2";
+      const controlsEl2 = $(`${prefix}-controls`);
+      const rows = controlsEl2.querySelectorAll(".key-row");
+      if (ingredientIndex < rows.length) {
+        const row = rows[ingredientIndex];
+        const newKey = player === 1 ? currentKeyBindings.p1[ingredientIndex] : currentKeyBindings.p2[ingredientIndex];
+        const keyEl = row.querySelector(".key");
+        if (keyEl) keyEl.textContent = newKey;
+        row.dataset.key = newKey;
+      }
+    }
     const explosion = checkExplosion(cauldron);
     if (explosion.exploded) {
       enterState("EXPLODING");

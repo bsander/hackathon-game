@@ -24,7 +24,7 @@ export const INGREDIENT_ORDER = ['scald', 'cool', 'swirl', 'boost'];
 export const P1_KEYS = ['1', '2', '3', '4'];
 export const P2_KEYS = ['7', '8', '9', '0'];
 
-export const ALL_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'q', 'w', 'e', 'r', 't', 'a', 's', 'd', 'f', 'g'];
+export const ALL_KEYS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
 export const KEYS_PER_PLAYER = 4;
 
 // Fisher-Yates shuffle
@@ -43,6 +43,33 @@ export function getRandomKeyBinding() {
     p1: shuffled.slice(0, KEYS_PER_PLAYER),
     p2: shuffled.slice(KEYS_PER_PLAYER, KEYS_PER_PLAYER * 2),
   };
+}
+
+export function randomizeOneKey(keyBindings, player, ingredientIndex) {
+  // Create a new binding object with copies of the current key arrays
+  const updated = {
+    p1: [...keyBindings.p1],
+    p2: [...keyBindings.p2],
+  };
+
+  // Get the opponent's keys to avoid collisions
+  const opponent = player === 1 ? 2 : 1;
+  const opponentKeys = opponent === 1 ? updated.p1 : updated.p2;
+
+  // Find an available key that doesn't collide with opponent
+  let newKey;
+  let attempts = 0;
+  const maxAttempts = 100; // Defensive: prevent infinite loop
+  do {
+    newKey = ALL_KEYS[Math.floor(Math.random() * ALL_KEYS.length)];
+    attempts++;
+  } while (opponentKeys.includes(newKey) && attempts < maxAttempts);
+
+  // Update the target player's key at the specified ingredient index
+  const playerKeys = player === 1 ? updated.p1 : updated.p2;
+  playerKeys[ingredientIndex] = newKey;
+
+  return updated;
 }
 
 export function ingredientForKey(key, keyBindings) {

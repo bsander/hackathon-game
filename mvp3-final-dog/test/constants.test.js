@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import {
-  INGREDIENTS, INGREDIENT_ORDER, P1_KEYS, P2_KEYS,
+  INGREDIENTS, INGREDIENT_ORDER, P1_KEYS, P2_KEYS, ALL_KEYS,
   ingredientForKey, lookupReaction, REACTIONS,
   PRESSURE_THRESHOLD, START_HEALTH,
-  getRandomKeyBinding,
+  getRandomKeyBinding, randomizeOneKey,
 } from '../js/constants.js';
 
 describe('constants', () => {
@@ -61,6 +61,30 @@ describe('reactions', () => {
   });
 });
 
+describe('expanded key pool', () => {
+  it('ALL_KEYS contains exactly 36 alphanumeric keys', () => {
+    expect(ALL_KEYS).toHaveLength(36);
+  });
+
+  it('ALL_KEYS contains all digits 0-9', () => {
+    for (let i = 0; i <= 9; i++) {
+      expect(ALL_KEYS).toContain(String(i));
+    }
+  });
+
+  it('ALL_KEYS contains all letters a-z', () => {
+    const letters = 'abcdefghijklmnopqrstuvwxyz'.split('');
+    for (const letter of letters) {
+      expect(ALL_KEYS).toContain(letter);
+    }
+  });
+
+  it('ALL_KEYS contains no duplicate keys', () => {
+    const uniqueKeys = new Set(ALL_KEYS);
+    expect(uniqueKeys.size).toBe(36);
+  });
+});
+
 describe('randomized key bindings', () => {
   it('getRandomKeyBinding returns correct structure with 4 keys per player', () => {
     const binding = getRandomKeyBinding();
@@ -77,6 +101,18 @@ describe('randomized key bindings', () => {
     for (const key of binding.p2) {
       expect(p1Set.has(key)).toBe(false);
     }
+  });
+
+  it('getRandomKeyBinding samples from expanded 36-key pool', () => {
+    // Collect many bindings to statistically verify they come from larger pool
+    const seenKeys = new Set();
+    for (let i = 0; i < 100; i++) {
+      const binding = getRandomKeyBinding();
+      binding.p1.forEach(k => seenKeys.add(k));
+      binding.p2.forEach(k => seenKeys.add(k));
+    }
+    // With 36-key pool and 100 random 8-key draws, expect to see > 20 unique keys
+    expect(seenKeys.size).toBeGreaterThan(20);
   });
 
   it('getRandomKeyBinding can be called repeatedly without error', () => {
@@ -96,3 +132,73 @@ describe('randomized key bindings', () => {
     expect(result.ingredient).toBeDefined();
   });
 });
+
+describe('selective key randomization', () => {
+  it('randomizeOneKey returns valid key binding structure', () => {
+    const binding = getRandomKeyBinding();
+    const result = randomizeOneKey(binding, 1, 0);
+    expect(result).toHaveProperty('p1');
+    expect(result).toHaveProperty('p2');
+    expect(result.p1).toHaveLength(4);
+    expect(result.p2).toHaveLength(4);
+  });
+
+  it('randomizeOneKey only changes one key for the target player', () => {
+    const binding = getRandomKeyBinding();
+    const original = { ...binding };
+    const result = randomizeOneKey(binding, 1, 0);
+
+    // Count how many keys changed for P1
+    let p1Changes = 0;
+    for (let i = 0; i < 4; i++) {
+      if (original.p1[i] !== result.p1[i]) p1Changes++;
+    }
+    expect(p1Changes).toBe(1);
+
+    // P2 should not change at all
+    for (let i = 0; i < 4; i++) {
+      expect(result.p2[i]).toBe(binding.p2[i]);
+    }
+  });
+
+  it('randomizeOneKey avoids collisions with opponent keys', () => {
+    const binding = getRandomKeyBinding();
+    for (let ingredientIdx = 0; ingredientIdx < 4; ingredientIdx++) {
+      const result = randomizeOneKey(binding, 1, ingredientIdx);
+      // The new P1 key at ingredientIdx should not collide with P2 keys
+      const newKey = result.p1[ingredientIdx];
+      expect(result.p2).not.toContain(newKey);
+    }
+  });
+
+  it('randomizeOneKey changes different players independently', () => {
+    const binding = getRandomKeyBinding();
+    const p1Original = [...binding.p1];
+    const p2Original = [...binding.p2];
+
+    const result1 = randomizeOneKey(binding, 1, 0);
+    // P1's first key changed, P2 unchanged
+    expect(result1.p1[0]).not.toBe(p1Original[0]);
+    for (let i = 0; i < 4; i++) {
+      expect(result1.p2[i]).toBe(p2Original[i]);
+    }
+
+    // Now randomize P2's second key using the already-modified binding
+    const result2 = randomizeOneKey(result1, 2, 1);
+    // P2's second key changed
+    expect(result2.p2[1]).not.toBe(result1.p2[1]);
+    // P1 should stay the same as result1
+    for (let i = 0; i < 4; i++) {
+      expect(result2.p1[i]).toBe(result1.p1[i]);
+    }
+  });
+
+  it('randomizeOneKey can be called multiple times on the same ingredient', () => {
+    let binding = getRandomKeyBinding();
+    const keys1 = randomizeOneKey(binding, 1, 0);
+    const keys2 = randomizeOneKey(keys1, 1, 0);
+    // Second randomization changed the key (almost certainly different)
+    expect(keys2.p1[0]).not.toBe(keys1.p1[0]);
+  });
+});
+
