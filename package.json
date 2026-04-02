@@ -4,7 +4,8 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "build": "esbuild mvp/js/game.js --bundle --outfile=mvp/bundle.js --format=iife"
+    "build": "esbuild mvp/js/game.js --bundle --outfile=mvp/bundle.js --format=iife",
+    "build:mvp2": "esbuild mvp2/js/game.js --bundle --outfile=mvp2/bundle.js --format=iife"
   },
   "devDependencies": {
     "esbuild": "^0.25.0",
