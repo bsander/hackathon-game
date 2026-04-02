@@ -109,11 +109,10 @@
   var $p2Role = document.getElementById("p2-role");
   var $p1Avatar = document.getElementById("p1-avatar");
   var $p2Avatar = document.getElementById("p2-avatar");
-  var $hints = [
-    document.getElementById("hint-0"),
-    document.getElementById("hint-1"),
-    document.getElementById("hint-2")
-  ];
+  var $hintsFor = {
+    1: [document.getElementById("hint-p1-0"), document.getElementById("hint-p1-1"), document.getElementById("hint-p1-2")],
+    2: [document.getElementById("hint-p2-0"), document.getElementById("hint-p2-1"), document.getElementById("hint-p2-2")]
+  };
   function clearTimer() {
     if (activeTimer !== null) {
       clearTimeout(activeTimer);
@@ -153,17 +152,21 @@
     atkRole.textContent = "attacker";
     defRole.textContent = "defender";
   }
-  function renderHints(keyMap) {
-    $hints.forEach((h) => {
+  function renderHints(player, keyMap) {
+    const hints = $hintsFor[player];
+    hints.forEach((h) => {
       h.innerHTML = "";
-      h.classList.remove("depleted");
     });
     const keys = Object.keys(keyMap);
     keys.forEach((k, i) => {
-      if ($hints[i]) {
-        $hints[i].innerHTML = `<span class="key">[${k}]</span> ${keyMap[k]}`;
+      if (hints[i]) {
+        hints[i].innerHTML = `<span class="key">[${k}]</span> ${keyMap[k]}`;
       }
     });
+  }
+  function renderBothHints(p1Map, p2Map) {
+    renderHints(1, p1Map);
+    renderHints(2, p2Map);
   }
   function renderHands() {
     for (const p of [1, 2]) {
@@ -254,9 +257,10 @@
         hideOverlay();
         renderRoles();
         renderPips();
-        $hints[0].innerHTML = '<span class="key">[1]</span> Fireball';
-        $hints[1].innerHTML = '<span class="key">[2]</span> Shield';
-        $hints[2].innerHTML = '<span class="key">[3]</span> Hex';
+        renderBothHints(
+          { "1": "Fireball", "2": "Shield", "3": "Hex" },
+          { "8": "Fireball", "9": "Shield", "0": "Hex" }
+        );
         break;
       case "ATTACK_PHASE": {
         attackSpell = null;
@@ -273,7 +277,12 @@
         $spellBanner.textContent = "";
         $phaseLabel.textContent = `PLAYER ${attacker} \u2014 ATTACK!`;
         const atkMap = filteredKeyMap(attacker, availableSpells(hands[attacker]));
-        renderHints(atkMap);
+        const defIdle = otherPlayer(attacker);
+        const defIdleMap = filteredKeyMap(defIdle, availableSpells(hands[defIdle]));
+        renderBothHints(
+          attacker === 1 ? atkMap : defIdleMap,
+          attacker === 2 ? atkMap : defIdleMap
+        );
         const duration = 3e3;
         startCountdownBar(duration);
         activeTimer = setTimeout(() => {
@@ -308,7 +317,11 @@
         });
         $spellBanner.textContent = `>>> ${attackSpell.toUpperCase()}! >>>`;
         $phaseLabel.textContent = `PLAYER ${def} \u2014 DEFEND!`;
-        renderHints(shuffledKeyMap);
+        const atkIdleMap = filteredKeyMap(attacker, availableSpells(hands[attacker]));
+        renderBothHints(
+          def === 2 ? atkIdleMap : shuffledKeyMap,
+          def === 1 ? atkIdleMap : shuffledKeyMap
+        );
         const duration = randBetween(1600, 2400);
         startCountdownBar(duration);
         activeTimer = setTimeout(() => {

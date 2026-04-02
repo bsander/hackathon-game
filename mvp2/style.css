@@ -1,9 +1,13 @@
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
 body {
   background: #0a0a1a;
   color: #e0e0e0;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   height: 100vh;
   display: flex;
   justify-content: center;
@@ -32,7 +36,9 @@ body {
   font-size: 16px;
 }
 
-#round-label { color: #888; }
+#round-label {
+  color: #888;
+}
 
 .score {
   display: flex;
@@ -40,7 +46,10 @@ body {
   gap: 6px;
 }
 
-.score-label { color: #aaa; font-size: 14px; }
+.score-label {
+  color: #aaa;
+  font-size: 14px;
+}
 
 .pip {
   width: 14px;
@@ -50,7 +59,10 @@ body {
   display: inline-block;
 }
 
-.pip.filled { background: #f0c040; border-color: #f0c040; }
+.pip.filled {
+  background: #f0c040;
+  border-color: #f0c040;
+}
 
 /* Arena */
 #arena {
@@ -115,13 +127,28 @@ body {
   transition: background 0.1s;
 }
 
-.player-col.attacker .avatar { border-color: #e04040; }
-.player-col.defender .avatar { border-color: #4080e0; }
+.player-col.attacker .avatar {
+  border-color: #e04040;
+}
+.player-col.defender .avatar {
+  border-color: #4080e0;
+}
 
-.player-name { font-size: 14px; color: #aaa; }
-.player-role { font-size: 12px; font-weight: bold; text-transform: uppercase; }
-.player-col.attacker .player-role { color: #e04040; }
-.player-col.defender .player-role { color: #4080e0; }
+.player-name {
+  font-size: 14px;
+  color: #aaa;
+}
+.player-role {
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+.player-col.attacker .player-role {
+  color: #e04040;
+}
+.player-col.defender .player-role {
+  color: #4080e0;
+}
 
 /* Centre area */
 #centre {
@@ -188,7 +215,10 @@ body {
   transition: opacity 0.2s;
 }
 
-#overlay.visible { opacity: 1; pointer-events: auto; }
+#overlay.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
 
 #overlay-text {
   font-size: 48px;
@@ -204,11 +234,15 @@ body {
 /* Footer */
 #footer {
   display: flex;
-  justify-content: center;
-  gap: 24px;
+  justify-content: space-between;
   padding: 12px 24px;
   border-top: 1px solid #333;
   font-size: 16px;
+}
+
+.hint-group {
+  display: flex;
+  gap: 8px;
 }
 
 .key-hint {
@@ -232,11 +266,17 @@ body {
 
 /* Hit flash animation */
 @keyframes flash-red {
-  0% { background: #e04040; }
-  100% { background: #1a1a2e; }
+  0% {
+    background: #e04040;
+  }
+  100% {
+    background: #1a1a2e;
+  }
 }
 
-.avatar.flash { animation: flash-red 0.4s ease-out; }
+.avatar.flash {
+  animation: flash-red 0.4s ease-out;
+}
 
 /* Paused overlay */
 #paused {
@@ -252,4 +292,6 @@ body {
   letter-spacing: 4px;
 }
 
-#paused.visible { display: flex; }
+#paused.visible {
+  display: flex;
+}
