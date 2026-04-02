@@ -1,4 +1,4 @@
-import { BEATS } from './constants.js';
+import { BEATS, CHAOS } from './constants.js';
 
 /**
  * Determine the outcome of an attack/defend exchange.
@@ -7,6 +7,10 @@ import { BEATS } from './constants.js';
 export function resolveSpells(attackSpell, defendSpell) {
   if (defendSpell === null || defendSpell === undefined) {
     return { outcome: 'HIT', attackSpell, defendSpell: null };
+  }
+  if (attackSpell === CHAOS || defendSpell === CHAOS) {
+    const outcome = Math.random() < 0.5 ? 'HIT' : 'BLOCKED';
+    return { outcome, attackSpell, defendSpell };
   }
   if (attackSpell === defendSpell) {
     return { outcome: 'CLASH', attackSpell, defendSpell };
