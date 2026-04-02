@@ -234,10 +234,9 @@
     $cauldron.classList.remove("hot", "critical");
     if (pct >= 80) $cauldron.classList.add("critical");
     else if (pct >= 50) $cauldron.classList.add("hot");
-    if (pct >= 80) $cauldronEmoji.textContent = "\u{1F4A5}";
-    else if (pct >= 50) $cauldronEmoji.textContent = "\u{1F525}";
-    else if (pct >= 20) $cauldronEmoji.textContent = "\u{1FAE7}";
-    else $cauldronEmoji.textContent = "\u{1FA84}";
+    $cauldronEmoji.classList.remove("cauldron-state-1", "cauldron-state-2", "cauldron-state-4");
+    if (pct < 20) $cauldronEmoji.classList.add("cauldron-state-1");
+    else $cauldronEmoji.classList.add("cauldron-state-2");
   }
   function renderBrew() {
     $p1Brew.className = "brew-indicator";
@@ -388,6 +387,8 @@
       case "COUNTDOWN":
         hideOverlay();
         cauldron = freshRoundState();
+        $cauldronEmoji.classList.remove("cauldron-state-1", "cauldron-state-2", "cauldron-state-4");
+        $cauldronEmoji.classList.add("cauldron-state-1");
         lastPress = { 1: null, 2: null };
         currentKeyBindings = getRandomKeyBinding();
         updateKeyRowsDisplay();
@@ -417,6 +418,8 @@
           return;
         }
         $game.classList.add("exploding");
+        $cauldronEmoji.classList.remove("cauldron-state-1", "cauldron-state-2", "cauldron-state-4");
+        $cauldronEmoji.classList.add("cauldron-state-4");
         health[result.loser]--;
         const loserLabel = `P${result.loser}`;
         const pipIdx = health[result.loser];
