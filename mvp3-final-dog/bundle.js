@@ -4,6 +4,7 @@
   var DIRECTION_MIN = -10;
   var DIRECTION_MAX = 10;
   var COOLDOWN_MS = 500;
+  var FIREBALL_COOLDOWN_MS = 1200;
   var REACTION_WINDOW_MS = 800;
   var START_HEALTH = 3;
   var COUNTDOWN_SECS = 3;
@@ -145,13 +146,15 @@
   var $overlayText = $("overlay-text");
   var $overlaySub = $("overlay-sub");
   var $directionFill = $("direction-fill");
-  var $directionMarker = $("direction-marker");
   var $pressureFill = $("pressure-fill");
   var $cauldron = $("cauldron");
   var $cauldronEmoji = $("cauldron-emoji");
+  var $cauldronArrow = $("cauldron-arrow");
   var $reactionLabel = $("reaction-label");
   var $p1Brew = $("p1-brew");
   var $p2Brew = $("p2-brew");
+  var $hintBanner = $("hint-banner");
+  var $centre = $("centre");
   function renderPips() {
     for (let p = 1; p <= 2; p++) {
       const prefix = p === 1 ? "p1" : "p2";
@@ -169,8 +172,6 @@
   }
   function renderDirection() {
     const dir = cauldron.direction;
-    const pct = (dir + 10) / 20 * 100;
-    $directionMarker.style.left = `${pct}%`;
     $directionFill.className = "";
     if (dir < 0) {
       $directionFill.classList.add("p1-danger");
@@ -184,6 +185,24 @@
       $directionFill.style.right = "0";
     } else {
       $directionFill.style.width = "0%";
+    }
+    if (dir < 0) {
+      $cauldronArrow.textContent = "\u2190";
+      $cauldronArrow.className = "arrow-active arrow-p1";
+    } else if (dir > 0) {
+      $cauldronArrow.textContent = "\u2192";
+      $cauldronArrow.className = "arrow-active arrow-p2";
+    } else {
+      $cauldronArrow.textContent = "";
+      $cauldronArrow.className = "";
+    }
+    const dangerThreshold = 7;
+    for (let p = 1; p <= 2; p++) {
+      for (let i = 0; i < START_HEALTH; i++) {
+        const pip = $(`p${p}-pip-${i}`);
+        const inDanger = p === 1 && dir <= -dangerThreshold || p === 2 && dir >= dangerThreshold;
+        pip.classList.toggle("danger", inDanger);
+      }
     }
   }
   function renderPressure() {
@@ -214,12 +233,12 @@
   }
   function showReaction(name) {
     const labels = {
-      counter: "COUNTERED!",
-      clash: "CLASH!",
-      deflect: "DEFLECTED!",
-      stall: "STALL!",
-      chaos: "CHAOS!",
-      cancel: "CANCELLED!"
+      counter: "COUNTERED! \u2014 direction negated",
+      clash: "CLASH! \u2014 directions cancel, +6 pressure",
+      deflect: "DEFLECTED! \u2014 fireball reversed at caster",
+      stall: "STALL! \u2014 pressure reduced",
+      chaos: "CHAOS! \u2014 direction randomised",
+      cancel: "CANCELLED! \u2014 brew stacks reset"
     };
     $reactionLabel.textContent = labels[name] || name.toUpperCase();
     $reactionLabel.classList.remove("visible");
@@ -236,6 +255,39 @@
     row.classList.add("pressed");
     setTimeout(() => row.classList.remove("pressed"), 150);
   }
+  function getDeltaText(ingredient, player) {
+    const arrow = player === 1 ? "\u2192" : "\u2190";
+    switch (ingredient) {
+      case "fireball":
+        return `+3 pressure, direction ${arrow}`;
+      case "shield":
+        return "\u22121 pressure";
+      case "hex":
+        return "direction reversed!";
+      case "brew":
+        return "+1 brew charge";
+      default:
+        return null;
+    }
+  }
+  var activeLabel = { 1: null, 2: null };
+  function spawnFloatingLabel(ingredient, player) {
+    if (activeLabel[player]) {
+      activeLabel[player].remove();
+      activeLabel[player] = null;
+    }
+    const text = getDeltaText(ingredient, player);
+    if (!text) return;
+    const el = document.createElement("div");
+    el.className = `floating-delta p${player}-delta`;
+    el.textContent = text;
+    $centre.appendChild(el);
+    activeLabel[player] = el;
+    el.addEventListener("animationend", () => {
+      el.remove();
+      if (activeLabel[player] === el) activeLabel[player] = null;
+    });
+  }
   function showOverlay(text, sub) {
     $overlayText.textContent = text;
     $overlaySub.textContent = sub || "";
@@ -244,11 +296,37 @@
   function hideOverlay() {
     $overlay.classList.add("hidden");
   }
+  function showOnboarding() {
+    $overlayText.innerHTML = "CAULDRON TUG-OF-WAR";
+    $overlaySub.innerHTML = [
+      '<div class="onboarding">',
+      '<p class="onboarding-concept">Both players throw ingredients into the cauldron.<br>When pressure maxes out, it explodes \u2014 the direction bar decides who takes damage.</p>',
+      '<div class="onboarding-cols">',
+      '<div class="onboarding-col">',
+      "<strong>P1</strong>",
+      "<span>[1] \u{1F525} Fireball \u2014 big push, slow recharge</span>",
+      "<span>[2] \u{1F6E1} Shield \u2014 reduces pressure</span>",
+      "<span>[3] \u{1F480} Hex \u2014 reverses direction</span>",
+      "<span>[4] \u2728 Brew \u2014 charges next spell</span>",
+      "</div>",
+      '<div class="onboarding-col">',
+      "<strong>P2</strong>",
+      "<span>[7] \u{1F525} Fireball</span>",
+      "<span>[8] \u{1F6E1} Shield</span>",
+      "<span>[9] \u{1F480} Hex</span>",
+      "<span>[0] \u2728 Brew</span>",
+      "</div>",
+      "</div>",
+      '<p class="onboarding-start">Press SPACE to start</p>',
+      "</div>"
+    ].join("");
+    $overlay.classList.remove("hidden");
+  }
   function enterState(newState) {
     gameState = newState;
     switch (newState) {
       case "IDLE":
-        showOverlay("CAULDRON TUG-OF-WAR", "Press any key to start");
+        showOnboarding();
         renderAll();
         break;
       case "COUNTDOWN":
@@ -270,6 +348,8 @@
         break;
       case "ROUND_ACTIVE":
         hideOverlay();
+        if (round === 1) $hintBanner.classList.remove("hidden");
+        else $hintBanner.classList.add("hidden");
         renderAll();
         break;
       case "EXPLODING": {
@@ -292,7 +372,7 @@
           if (health[result.loser] <= 0) {
             const winner = result.loser === 1 ? 2 : 1;
             enterState("GAME_OVER");
-            showOverlay(`P${winner} WINS!`, "Press any key to play again");
+            showOverlay(`P${winner} WINS!`, "Press SPACE to play again");
           } else {
             enterState("ROUND_PAUSE");
           }
@@ -311,6 +391,7 @@
   }
   document.addEventListener("keydown", (e) => {
     if (gameState === "IDLE" || gameState === "GAME_OVER") {
+      if (e.key !== " ") return;
       health = { 1: START_HEALTH, 2: START_HEALTH };
       round = 1;
       enterState("COUNTDOWN");
@@ -322,8 +403,13 @@
     const { player, ingredient } = mapping;
     const now = performance.now();
     if (now < cooldownUntil[player]) return;
-    cooldownUntil[player] = now + COOLDOWN_MS;
+    const cooldownDuration = ingredient === "fireball" ? FIREBALL_COOLDOWN_MS : COOLDOWN_MS;
+    cooldownUntil[player] = now + cooldownDuration;
+    const controlsEl = $(`p${player}-controls`);
+    controlsEl.classList.add("on-cooldown");
+    setTimeout(() => controlsEl.classList.remove("on-cooldown"), cooldownDuration);
     flashKeyRow(e.key);
+    spawnFloatingLabel(ingredient, player);
     cauldron = applyIngredient(cauldron, player, ingredient);
     const otherPlayer = player === 1 ? 2 : 1;
     const thisPress = { ingredient, time: now };

@@ -59,6 +59,10 @@ body {
   opacity: 0.3;
 }
 
+.pip.danger {
+  animation: pip-danger-pulse 0.6s ease-in-out infinite;
+}
+
 .pip.shatter {
   animation: pip-shatter 0.6s forwards;
 }
@@ -99,7 +103,8 @@ body {
   transform: scale(0.96);
 }
 
-.key-row.on-cooldown {
+.key-row.on-cooldown,
+.controls.on-cooldown .key-row {
   opacity: 0.4;
 }
 
@@ -146,6 +151,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  position: relative;
   gap: 20px;
   max-width: 360px;
 }
@@ -194,19 +200,6 @@ body {
   right: 0;
 }
 
-#direction-marker {
-  position: absolute;
-  top: -2px;
-  width: 4px;
-  height: 24px;
-  background: #f0c040;
-  border-radius: 2px;
-  transition: left 0.15s ease-out;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1;
-}
-
 /* ── Cauldron ──────────────────────────────────────────────── */
 #cauldron {
   position: relative;
@@ -236,6 +229,30 @@ body {
 #cauldron-emoji {
   font-size: 48px;
   transition: transform 0.3s;
+}
+
+#cauldron-arrow {
+  font-size: 28px;
+  font-weight: 900;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+#cauldron-arrow.arrow-active {
+  opacity: 0.8;
+}
+
+#cauldron-arrow.arrow-p1 {
+  left: -36px;
+  color: #e04040;
+}
+
+#cauldron-arrow.arrow-p2 {
+  right: -36px;
+  color: #4080e0;
 }
 
 #reaction-label {
@@ -287,6 +304,24 @@ body {
   transition: width 0.15s ease-out;
 }
 
+/* ── Hint banner ──────────────────────────────────────────── */
+#hint-banner {
+  text-align: center;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #f0c040;
+  background: rgba(240, 192, 64, 0.08);
+  border: 1px solid rgba(240, 192, 64, 0.2);
+  border-radius: 6px;
+  margin: 0 auto;
+  transition: opacity 0.3s;
+}
+
+#hint-banner.hidden {
+  display: none;
+}
+
 /* ── Footer ────────────────────────────────────────────────── */
 #footer {
   display: flex;
@@ -329,6 +364,80 @@ body {
   margin-top: 8px;
 }
 
+.onboarding {
+  text-align: center;
+  max-width: 520px;
+}
+
+.onboarding-concept {
+  font-size: 14px;
+  color: #aaa;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.onboarding-cols {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin-bottom: 16px;
+}
+
+.onboarding-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  font-size: 13px;
+  color: #ccc;
+}
+
+.onboarding-col strong {
+  font-size: 14px;
+  color: #f0c040;
+  margin-bottom: 4px;
+}
+
+.onboarding-start {
+  font-size: 16px;
+  color: #f0c040;
+  letter-spacing: 1px;
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* ── Floating delta labels ─────────────────────────────────── */
+.floating-delta {
+  position: absolute;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: delta-rise 0.8s ease-out forwards;
+  z-index: 5;
+}
+
+.p1-delta {
+  left: 20%;
+  top: 40%;
+  color: #e08080;
+}
+
+.p2-delta {
+  right: 20%;
+  top: 40%;
+  color: #8080e0;
+}
+
+@keyframes delta-rise {
+  0% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-30px); }
+}
+
 /* ── Animations ────────────────────────────────────────────── */
 @keyframes shake {
   0%, 100% { transform: translate(0, 0); }
@@ -340,6 +449,11 @@ body {
 @keyframes float-up {
   0% { opacity: 1; transform: translateY(0); }
   100% { opacity: 0; transform: translateY(-20px); }
+}
+
+@keyframes pip-danger-pulse {
+  0%, 100% { color: #e04040; transform: scale(1); }
+  50% { color: #ff6060; transform: scale(1.2); text-shadow: 0 0 8px rgba(255, 64, 64, 0.6); }
 }
 
 @keyframes pip-shatter {
