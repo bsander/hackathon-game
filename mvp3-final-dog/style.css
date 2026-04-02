@@ -191,9 +191,17 @@ body {
 }
 
 #cauldron-emoji {
-  font-size: 48px;
+  width: 80px;
+  height: 80px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
   transition: transform 0.3s;
 }
+
+#cauldron-emoji.cauldron-state-1 { background-image: url(assets/character_animation-1.webp); }
+#cauldron-emoji.cauldron-state-2 { background-image: url(assets/character_animation-2.webp); }
+#cauldron-emoji.cauldron-state-4 { background-image: url(assets/character_animation-4.webp); }
 
 #cauldron-arrow {
   font-size: 28px;
