@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arcane Akash</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="game">
+  <!-- Header -->
+  <div id="header">
+    <span id="round-label">ROUND 1</span>
+    <div class="score">
+      <span class="score-label">P1</span>
+      <span class="pip" id="p1-pip-0"></span>
+      <span class="pip" id="p1-pip-1"></span>
+      <span class="pip" id="p1-pip-2"></span>
+    </div>
+    <div class="score">
+      <span class="score-label">P2</span>
+      <span class="pip" id="p2-pip-0"></span>
+      <span class="pip" id="p2-pip-1"></span>
+      <span class="pip" id="p2-pip-2"></span>
+    </div>
+  </div>
+
+  <!-- Arena -->
+  <div id="arena">
+    <div class="player-col" id="p1-col">
+      <div class="avatar" id="p1-avatar">🧙</div>
+      <div class="player-name">PLAYER 1</div>
+      <div class="player-role" id="p1-role"></div>
+    </div>
+
+    <div id="centre">
+      <div id="spell-banner"></div>
+      <div id="phase-label"></div>
+      <div id="countdown-container">
+        <div id="countdown-bar"></div>
+      </div>
+      <div id="countdown-text"></div>
+    </div>
+
+    <div class="player-col" id="p2-col">
+      <div class="avatar" id="p2-avatar">🧟</div>
+      <div class="player-name">PLAYER 2</div>
+      <div class="player-role" id="p2-role"></div>
+    </div>
+  </div>
+
+  <!-- Overlay -->
+  <div id="overlay">
+    <div id="overlay-text"></div>
+    <div id="overlay-sub"></div>
+  </div>
+
+  <!-- Paused -->
+  <div id="paused">PAUSED</div>
+
+  <!-- Footer -->
+  <div id="footer">
+    <span class="key-hint" id="hint-0"></span>
+    <span class="key-hint" id="hint-1"></span>
+    <span class="key-hint" id="hint-2"></span>
+  </div>
+</div>
+
+<script src="bundle.js"></script>
+
+</body>
+</html>

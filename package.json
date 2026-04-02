@@ -1,0 +1,13 @@
+{
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build": "esbuild mvp/js/game.js --bundle --outfile=mvp/bundle.js --format=iife"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "vitest": "^3.0.0"
+  }
+}
