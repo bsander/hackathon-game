@@ -1269,7 +1269,7 @@ git commit -m "feat(mvp2): integrate hand system into game loop"
 
 - [ ] **Step 1: Open `mvp2/index.html` in browser**
 
-Open `file:///path/to/hackathon-game/mvp2/index.html` directly, or serve with:
+Open `file:///path/to/LIT-intelligence/mvp2/index.html` directly, or serve with:
 
 ```bash
 npx serve . -p 3001
