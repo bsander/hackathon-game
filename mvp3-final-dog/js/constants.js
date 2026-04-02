@@ -2,8 +2,8 @@
 export const PRESSURE_THRESHOLD = 30;
 export const DIRECTION_MIN = -10;
 export const DIRECTION_MAX = 10;
-export const COOLDOWN_MS = 500;
-export const FIREBALL_COOLDOWN_MS = 1200;
+export const COOLDOWN_MS = 100;
+export const FIREBALL_COOLDOWN_MS = 250;
 export const REACTION_WINDOW_MS = 800;
 export const START_HEALTH = 3;
 export const COUNTDOWN_SECS = 3;
