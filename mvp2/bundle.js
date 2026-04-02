@@ -223,6 +223,7 @@
     hideCountdown();
     const scorer = otherPlayer(emptyPlayer);
     flashAvatar(emptyPlayer);
+    renderHands();
     showOverlay("EMPTY HAND!", `Player ${emptyPlayer} has no spells left`, "#e04040");
     scores[scorer]++;
     renderPips();
