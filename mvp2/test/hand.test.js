@@ -39,6 +39,13 @@ describe('spendCard', () => {
     const result = spendCard(hand, 'Hex');
     expect(result.filter(c => c === 'Hex')).toHaveLength(2);
   });
+
+  it('returns the same hand when spell is not present', () => {
+    const hand = ['Fireball', 'Shield', 'Shield'];
+    const result = spendCard(hand, 'Hex');
+    expect(result).toEqual(['Fireball', 'Shield', 'Shield']);
+    expect(result).toBe(hand); // same reference returned
+  });
 });
 
 describe('hasSpell', () => {
