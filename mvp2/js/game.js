@@ -68,8 +68,8 @@ function renderRoles() {
   const atkRole = attacker === 1 ? $p1Role : $p2Role;
   const defRole = attacker === 1 ? $p2Role : $p1Role;
 
-  $p1Col.classList.remove('attacker', 'defender');
-  $p2Col.classList.remove('attacker', 'defender');
+  $p1Col.classList.remove('attacker', 'defender', 'acting', 'waiting');
+  $p2Col.classList.remove('attacker', 'defender', 'acting', 'waiting');
 
   if (state === 'IDLE' || state === 'GAME_OVER') {
     atkRole.textContent = '';
@@ -81,6 +81,14 @@ function renderRoles() {
   defCol.classList.add('defender');
   atkRole.textContent = 'attacker';
   defRole.textContent = 'defender';
+
+  if (state === 'ATTACK_PHASE' || state === 'REVEAL_DELAY') {
+    atkCol.classList.add('acting');
+    defCol.classList.add('waiting');
+  } else if (state === 'DEFEND_PHASE') {
+    defCol.classList.add('acting');
+    atkCol.classList.add('waiting');
+  }
 }
 
 function renderHints(player, keyMap) {
@@ -241,6 +249,7 @@ function enterState(newState) {
     }
 
     case 'REVEAL_DELAY': {
+      renderRoles();
       $phaseLabel.textContent = '';
       hideCountdown();
       $spellBanner.textContent = '...';
@@ -255,6 +264,7 @@ function enterState(newState) {
     }
 
     case 'DEFEND_PHASE': {
+      renderRoles();
       const def = otherPlayer(attacker);
 
       if (isEmpty(hands[def])) {

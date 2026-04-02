@@ -16,8 +16,8 @@ body {
 }
 
 #game {
-  width: 960px;
-  height: 500px;
+  width: 1920px;
+  height: 1080px;
   display: flex;
   flex-direction: column;
   border: 2px solid #333;
@@ -148,6 +148,29 @@ body {
 }
 .player-col.defender .player-role {
   color: #4080e0;
+}
+
+/* Active / waiting turn indicators */
+.player-col.acting .avatar {
+  transform: scale(1.08);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+#p1-col.acting .avatar {
+  box-shadow: 0 0 32px 8px #f0c040;
+}
+#p2-col.acting .avatar {
+  box-shadow: 0 0 32px 8px #40c0f0;
+}
+.player-col.acting .player-role {
+  font-size: 22px;
+  letter-spacing: 2px;
+}
+.player-col.waiting {
+  opacity: 0.35;
+  transition: opacity 0.2s;
+}
+.player-col.acting {
+  transition: opacity 0.2s;
 }
 
 /* Centre area */
