@@ -1,28 +1,16 @@
 (() => {
   // mvp/js/constants.js
-  var SPELLS = ["Fireball", "Shield", "Hex"];
   var BEATS = { Fireball: "Hex", Shield: "Fireball", Hex: "Shield" };
-  var P1_KEYS = { "1": "Fireball", "2": "Shield", "3": "Hex" };
-  var P2_KEYS = { "8": "Fireball", "9": "Shield", "0": "Hex" };
   var WIN_SCORE = 3;
+  var CHAOS = "Chaos";
+  var SLOT_DEFAULTS = ["Fireball", "Shield", "Hex"];
 
   // mvp/js/utils.js
   function randBetween(min, max) {
     return min + Math.random() * (max - min);
   }
-  function shuffleArray(arr) {
-    const a = arr.slice();
-    for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [a[i], a[j]] = [a[j], a[i]];
-    }
-    return a;
-  }
   function otherPlayer(p) {
     return p === 1 ? 2 : 1;
-  }
-  function keysForPlayer(p) {
-    return p === 1 ? P1_KEYS : P2_KEYS;
   }
   function keyListForPlayer(p) {
     return p === 1 ? ["1", "2", "3"] : ["8", "9", "0"];
@@ -32,6 +20,10 @@
   function resolveSpells(attackSpell2, defendSpell2) {
     if (defendSpell2 === null || defendSpell2 === void 0) {
       return { outcome: "HIT", attackSpell: attackSpell2, defendSpell: null };
+    }
+    if (attackSpell2 === CHAOS || defendSpell2 === CHAOS) {
+      const outcome = Math.random() < 0.5 ? "HIT" : "BLOCKED";
+      return { outcome, attackSpell: attackSpell2, defendSpell: defendSpell2 };
     }
     if (attackSpell2 === defendSpell2) {
       return { outcome: "CLASH", attackSpell: attackSpell2, defendSpell: defendSpell2 };
@@ -60,12 +52,33 @@
   var round = 1;
   var attacker = 1;
   var attackSpell = null;
+  var attackSlotIndex = null;
   var defendSpell = null;
-  var shuffledKeyMap = null;
+  var defendSlotIndex = null;
   var countdownStart = 0;
   var countdownDuration = 0;
   var paused = false;
   var pausedRemaining = 0;
+  var playerSlots = { 1: [...SLOT_DEFAULTS], 2: [...SLOT_DEFAULTS] };
+  function resetAllSlots() {
+    playerSlots[1] = [...SLOT_DEFAULTS];
+    playerSlots[2] = [...SLOT_DEFAULTS];
+  }
+  function morphSlot(player, slotIndex, spell) {
+    playerSlots[player][slotIndex] = spell;
+  }
+  function slotKeyMap(player) {
+    const keys = keyListForPlayer(player);
+    const map = {};
+    keys.forEach((k, i) => {
+      map[k] = playerSlots[player][i];
+    });
+    return map;
+  }
+  function slotIndexForKey(player, key) {
+    const keys = keyListForPlayer(player);
+    return keys.indexOf(key);
+  }
   var $roundLabel = document.getElementById("round-label");
   var $spellBanner = document.getElementById("spell-banner");
   var $phaseLabel = document.getElementById("phase-label");
@@ -82,11 +95,10 @@
   var $p2Role = document.getElementById("p2-role");
   var $p1Avatar = document.getElementById("p1-avatar");
   var $p2Avatar = document.getElementById("p2-avatar");
-  var $hints = [
-    document.getElementById("hint-0"),
-    document.getElementById("hint-1"),
-    document.getElementById("hint-2")
-  ];
+  var $slots = {
+    1: [document.getElementById("p1-slot-0"), document.getElementById("p1-slot-1"), document.getElementById("p1-slot-2")],
+    2: [document.getElementById("p2-slot-0"), document.getElementById("p2-slot-1"), document.getElementById("p2-slot-2")]
+  };
   function clearTimer() {
     if (activeTimer !== null) {
       clearTimeout(activeTimer);
@@ -122,11 +134,18 @@
     atkRole.textContent = "attacker";
     defRole.textContent = "defender";
   }
-  function renderHints(keyMap) {
-    const keys = Object.keys(keyMap);
-    keys.forEach((k, i) => {
-      $hints[i].innerHTML = `<span class="key">[${k}]</span> ${keyMap[k]}`;
-    });
+  var SPELL_EMOJI = { Fireball: "\u{1F525}", Shield: "\u{1F6E1}", Hex: "\u{1F480}", Chaos: "\u{1F300}" };
+  function renderSlots() {
+    for (let p = 1; p <= 2; p++) {
+      const keys = keyListForPlayer(p);
+      for (let i = 0; i < 3; i++) {
+        const spell = playerSlots[p][i];
+        const el = $slots[p][i];
+        const emoji = SPELL_EMOJI[spell] || "\u2753";
+        el.innerHTML = `<span class="key">[${keys[i]}]</span> <span class="slot-name">${spell}</span> <span class="slot-emoji">${emoji}</span>`;
+        el.classList.toggle("chaos", spell === CHAOS);
+      }
+    }
   }
   function startCountdownBar(durationMs) {
     countdownStart = performance.now();
@@ -165,6 +184,22 @@
   function hideOverlay() {
     $overlay.classList.remove("visible");
   }
+  function showMorphFeedback(events) {
+    for (const { player, slot, type, label } of events) {
+      const el = $slots[player][slot];
+      el.classList.remove("morph-degrade", "morph-restore");
+      void el.offsetWidth;
+      el.classList.add(type === "restore" ? "morph-restore" : "morph-degrade");
+      const labelEl = document.createElement("span");
+      labelEl.className = `morph-label ${type}`;
+      labelEl.textContent = label;
+      el.appendChild(labelEl);
+      setTimeout(() => {
+        labelEl.remove();
+        el.classList.remove("morph-degrade", "morph-restore");
+      }, 600);
+    }
+  }
   function flashAvatar(player) {
     const av = player === 1 ? $p1Avatar : $p2Avatar;
     av.classList.remove("flash");
@@ -182,21 +217,19 @@
         hideOverlay();
         renderRoles();
         renderPips();
-        $hints[0].innerHTML = '<span class="key">[1]</span> Fireball';
-        $hints[1].innerHTML = '<span class="key">[2]</span> Shield';
-        $hints[2].innerHTML = '<span class="key">[3]</span> Hex';
+        renderSlots();
         break;
       case "ATTACK_PHASE": {
         attackSpell = null;
+        attackSlotIndex = null;
         defendSpell = null;
-        shuffledKeyMap = null;
+        defendSlotIndex = null;
         $roundLabel.textContent = "ROUND " + round;
         renderRoles();
         renderPips();
         $spellBanner.textContent = "";
         $phaseLabel.textContent = `PLAYER ${attacker} \u2014 ATTACK!`;
-        const atkKeys = keysForPlayer(attacker);
-        renderHints(atkKeys);
+        renderSlots();
         const duration = 3e3;
         startCountdownBar(duration);
         activeTimer = setTimeout(() => {
@@ -218,15 +251,9 @@
       }
       case "DEFEND_PHASE": {
         const def = otherPlayer(attacker);
-        const defKeys = keyListForPlayer(def);
-        const shuffledSpells = shuffleArray(SPELLS);
-        shuffledKeyMap = {};
-        defKeys.forEach((k, i) => {
-          shuffledKeyMap[k] = shuffledSpells[i];
-        });
         $spellBanner.textContent = `>>> ${attackSpell.toUpperCase()}! >>>`;
         $phaseLabel.textContent = `PLAYER ${def} \u2014 DEFEND!`;
-        renderHints(shuffledKeyMap);
+        renderSlots();
         const duration = randBetween(1600, 2400);
         startCountdownBar(duration);
         activeTimer = setTimeout(() => {
@@ -295,6 +322,26 @@
       scores[attacker] += next.scoreChange;
       renderPips();
     }
+    const morphEvents = [];
+    if (attackSlotIndex !== null) {
+      if (playerSlots[attacker][attackSlotIndex] === CHAOS) {
+        morphSlot(attacker, attackSlotIndex, SLOT_DEFAULTS[attackSlotIndex]);
+        morphEvents.push({ player: attacker, slot: attackSlotIndex, type: "restore", label: "CAST \u2192 RESTORED!" });
+      } else {
+        morphSlot(attacker, attackSlotIndex, CHAOS);
+        morphEvents.push({ player: attacker, slot: attackSlotIndex, type: "degrade", label: "CAST \u2192 CHAOS" });
+      }
+    }
+    if (result.outcome === "HIT" || reason === "TIMEOUT") {
+      const standardSlots = playerSlots[def].map((spell, i) => spell !== CHAOS ? i : -1).filter((i) => i >= 0);
+      if (standardSlots.length > 0) {
+        const pick = standardSlots[Math.floor(Math.random() * standardSlots.length)];
+        morphSlot(def, pick, CHAOS);
+        morphEvents.push({ player: def, slot: pick, type: "degrade", label: "HIT \u2192 CHAOS" });
+      }
+    }
+    renderSlots();
+    showMorphFeedback(morphEvents);
     if (next.next === "GAME_OVER") {
       activeTimer = setTimeout(() => {
         hideOverlay();
@@ -305,6 +352,7 @@
         hideOverlay();
         round++;
         attacker = Math.random() < 0.5 ? 1 : 2;
+        resetAllSlots();
         enterState("ATTACK_PHASE");
       }, 1500);
     } else {
@@ -320,18 +368,23 @@
       scores = { 1: 0, 2: 0 };
       round = 1;
       attacker = Math.random() < 0.5 ? 1 : 2;
+      resetAllSlots();
       enterState("ATTACK_PHASE");
     },
     ATTACK_PHASE(key) {
-      const atkKeys = keysForPlayer(attacker);
-      if (!(key in atkKeys)) return;
-      attackSpell = atkKeys[key];
+      const atkMap = slotKeyMap(attacker);
+      if (!(key in atkMap)) return;
+      attackSlotIndex = slotIndexForKey(attacker, key);
+      attackSpell = atkMap[key];
       enterState("REVEAL_DELAY");
     },
     DEFEND_PHASE(key) {
       if (defendSpell !== null) return;
-      if (!shuffledKeyMap || !(key in shuffledKeyMap)) return;
-      defendSpell = shuffledKeyMap[key];
+      const def = otherPlayer(attacker);
+      const defMap = slotKeyMap(def);
+      if (!(key in defMap)) return;
+      defendSlotIndex = slotIndexForKey(def, key);
+      defendSpell = defMap[key];
       resolve("CAST");
     },
     GAME_OVER(_key) {

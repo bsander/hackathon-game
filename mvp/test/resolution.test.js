@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { resolveSpells, nextStateAfterResolve } from '../js/resolution.js';
-import { SPELLS, BEATS, WIN_SCORE } from '../js/constants.js';
+import { SPELLS, BEATS, WIN_SCORE, CHAOS } from '../js/constants.js';
 
 describe('resolveSpells', () => {
   describe('timeout (null defendSpell)', () => {
@@ -69,6 +69,56 @@ describe('resolveSpells', () => {
     const result = resolveSpells('Fireball', 'Shield');
     expect(result.attackSpell).toBe('Fireball');
     expect(result.defendSpell).toBe('Shield');
+  });
+
+  describe('Chaos resolution', () => {
+    it('Chaos attack vs Standard defend → HIT or BLOCKED only', () => {
+      for (const defend of SPELLS) {
+        const result = resolveSpells(CHAOS, defend);
+        expect(['HIT', 'BLOCKED']).toContain(result.outcome);
+        expect(result.attackSpell).toBe(CHAOS);
+        expect(result.defendSpell).toBe(defend);
+      }
+    });
+
+    it('Standard attack vs Chaos defend → HIT or BLOCKED only', () => {
+      for (const attack of SPELLS) {
+        const result = resolveSpells(attack, CHAOS);
+        expect(['HIT', 'BLOCKED']).toContain(result.outcome);
+      }
+    });
+
+    it('Chaos vs Chaos → HIT or BLOCKED only', () => {
+      const result = resolveSpells(CHAOS, CHAOS);
+      expect(['HIT', 'BLOCKED']).toContain(result.outcome);
+    });
+
+    it('never returns CLASH for Chaos matchups', () => {
+      // Run many times to check probabilistically
+      for (let i = 0; i < 50; i++) {
+        for (const spell of [...SPELLS, CHAOS]) {
+          const r1 = resolveSpells(CHAOS, spell);
+          expect(r1.outcome).not.toBe('CLASH');
+          const r2 = resolveSpells(spell, CHAOS);
+          expect(r2.outcome).not.toBe('CLASH');
+        }
+      }
+    });
+
+    it('Chaos produces both HIT and BLOCKED over many runs (randomness check)', () => {
+      const outcomes = new Set();
+      for (let i = 0; i < 100; i++) {
+        const { outcome } = resolveSpells(CHAOS, 'Fireball');
+        outcomes.add(outcome);
+      }
+      expect(outcomes.has('HIT')).toBe(true);
+      expect(outcomes.has('BLOCKED')).toBe(true);
+    });
+
+    it('Chaos attack with null defend → HIT (timeout)', () => {
+      const result = resolveSpells(CHAOS, null);
+      expect(result.outcome).toBe('HIT');
+    });
   });
 });
 
