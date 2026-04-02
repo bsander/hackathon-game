@@ -94,9 +94,10 @@ function renderPressure() {
   else if (pct >= 50) $cauldron.classList.add('hot');
 
   // Cauldron image reflects intensity
-  $cauldronEmoji.classList.remove('cauldron-state-1', 'cauldron-state-2', 'cauldron-state-4');
+  $cauldronEmoji.classList.remove('cauldron-state-1', 'cauldron-state-2', 'cauldron-state-3', 'cauldron-state-4');
   if (pct < 20) $cauldronEmoji.classList.add('cauldron-state-1');
-  else $cauldronEmoji.classList.add('cauldron-state-2');
+  else if (pct < 50) $cauldronEmoji.classList.add('cauldron-state-2');
+  else $cauldronEmoji.classList.add('cauldron-state-3');
 }
 
 function renderBrew() {
@@ -274,7 +275,7 @@ function enterState(newState) {
     case 'COUNTDOWN':
       hideOverlay();
       cauldron = freshRoundState();
-      $cauldronEmoji.classList.remove('cauldron-state-1', 'cauldron-state-2', 'cauldron-state-4');
+      $cauldronEmoji.classList.remove('cauldron-state-1', 'cauldron-state-2', 'cauldron-state-3', 'cauldron-state-4');
       $cauldronEmoji.classList.add('cauldron-state-1');
       lastPress = { 1: null, 2: null };
       currentKeyBindings = getRandomKeyBinding();
@@ -308,7 +309,7 @@ function enterState(newState) {
         return;
       }
       $game.classList.add('exploding');
-      $cauldronEmoji.classList.remove('cauldron-state-1', 'cauldron-state-2', 'cauldron-state-4');
+      $cauldronEmoji.classList.remove('cauldron-state-1', 'cauldron-state-2', 'cauldron-state-3', 'cauldron-state-4');
       $cauldronEmoji.classList.add('cauldron-state-4');
       health[result.loser]--;
       const loserLabel = `P${result.loser}`;
