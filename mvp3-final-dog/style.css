@@ -18,6 +18,8 @@ body {
   display: flex;
   flex-direction: column;
   position: relative;
+  transform: scale(1.35);
+  transform-origin: center center;
 }
 
 /* ── Header ───────────────────────────────────────────────── */
