@@ -5,7 +5,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "build": "esbuild mvp/js/game.js --bundle --outfile=mvp/bundle.js --format=iife",
-    "build:mvp2": "esbuild mvp2/js/game.js --bundle --outfile=mvp2/bundle.js --format=iife"
+    "build:mvp2": "esbuild mvp2/js/game.js --bundle --outfile=mvp2/bundle.js --format=iife",
+    "build:mvp3": "esbuild mvp3-final-dog/js/game.js --bundle --outfile=mvp3-final-dog/bundle.js --format=iife",
+    "build:all": "npm run build && npm run build:mvp2 && npm run build:mvp3"
   },
   "devDependencies": {
     "esbuild": "^0.25.0",
