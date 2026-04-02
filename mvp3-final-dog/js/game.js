@@ -217,7 +217,7 @@ function hideOverlay() {
 function showOnboarding() {
   if (onboardingScreen === 1) {
     // Screen 1: Core mechanic
-    $overlayText.innerHTML = 'CAULDRON TUG-OF-WAR';
+    $overlayText.innerHTML = 'CHAOS BREWING';
     $overlaySub.innerHTML = [
       '<div class="onboarding">',
       '<p class="onboarding-concept">Two brewers. One cauldron. Toss ingredients to build pressure — when it blows, the <strong>arrow</strong> decides who takes the blast.</p>',
