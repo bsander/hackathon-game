@@ -37,20 +37,20 @@ export function applyIngredient(state, player, ingredientName) {
   let { pressure, direction, brewStacks } = state;
   const newBrewStacks = { ...brewStacks };
 
-  // Brew multiplier from stored stacks (consumed on non-brew press)
-  const multiplier = ingredientName !== 'brew' ? 1 + brewStacks[player] : 1;
+  // Boost multiplier from stored stacks (consumed on non-boost press)
+  const multiplier = ingredientName !== 'boost' ? 1 + brewStacks[player] : 1;
 
-  if (ingredientName === 'brew') {
-    // Brew: increment stacks (cap at MAX_BREW_STACKS), add pressure
+  if (ingredientName === 'boost') {
+    // Boost: increment stacks (cap at MAX_BREW_STACKS), add pressure
     newBrewStacks[player] = Math.min(MAX_BREW_STACKS, brewStacks[player] + 1);
     pressure += def.pressure;
-  } else if (ingredientName === 'hex') {
-    // Hex: reverse direction, add ±1 random variance, add pressure
+  } else if (ingredientName === 'swirl') {
+    // Swirl: reverse direction, add ±1 random variance, add pressure
     direction = -direction + (Math.random() < 0.5 ? 1 : -1);
     pressure += def.pressure;
     newBrewStacks[player] = 0;
   } else {
-    // Fireball / Shield: apply pressure and direction with brew multiplier
+    // Scald / Cool: apply pressure and direction with boost multiplier
     pressure += def.pressure;
     direction += def.direction * directionSign(player) * multiplier;
     newBrewStacks[player] = 0;
@@ -85,38 +85,38 @@ export function applyReaction(state, reactionName, triggerPlayer) {
 
   switch (reactionName) {
     case 'counter':
-      // Shield after Fireball: negate Fireball's direction contribution.
-      // Net effect: +2 pressure (3 fireball - 1 shield), 0 direction.
-      // We undo the fireball's +3 direction from the last apply.
+      // Cool after Scald: negate Scald's direction contribution.
+      // Net effect: +2 pressure (3 scald - 1 cool), 0 direction.
+      // We undo the scald's +3 direction from the last apply.
       direction -= 3 * directionSign(triggerPlayer === 1 ? 2 : 1);
       break;
 
     case 'clash':
-      // Fireball+Fireball: directions cancel. Net: +6 pressure, 0 direction.
+      // Scald+Scald: directions cancel. Net: +6 pressure, 0 direction.
       direction = 0;
       break;
 
     case 'deflect':
-      // Hex after Fireball: Fireball's direction reverses toward its caster.
-      // The fireball was already applied; we reverse it twice (negate + reverse).
+      // Swirl after Scald: Scald's direction reverses toward its caster.
+      // The scald was already applied; we reverse it twice (negate + reverse).
       {
-        const fireballPlayer = triggerPlayer; // the one whose fireball gets deflected
-        const fireballDir = 3 * directionSign(fireballPlayer);
-        direction -= 2 * fireballDir; // undo original, apply reversed
+        const scaldPlayer = triggerPlayer; // the one whose scald gets deflected
+        const scaldDir = 3 * directionSign(scaldPlayer);
+        direction -= 2 * scaldDir; // undo original, apply reversed
       }
       break;
 
     case 'stall':
-      // Shield+Shield: net -2 pressure, no direction change. Already applied.
+      // Cool+Cool: net -2 pressure, no direction change. Already applied.
       break;
 
     case 'chaos':
-      // Hex+Hex: direction becomes random, +4 pressure already applied.
+      // Swirl+Swirl: direction becomes random, +4 pressure already applied.
       direction = Math.floor(Math.random() * (DIRECTION_MAX - DIRECTION_MIN + 1)) + DIRECTION_MIN;
       break;
 
     case 'cancel':
-      // Brew+Brew: both fizzle — reset brew stacks.
+      // Boost+Boost: both fizzle — reset boost stacks.
       newBrewStacks[1] = 0;
       newBrewStacks[2] = 0;
       break;
